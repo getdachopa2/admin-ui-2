@@ -11,6 +11,7 @@ import {
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { CheckCircle, Loader2, TestTube2, XCircle } from "lucide-react";
 import type { TestRun, TestRunStep } from "../types";
+import { cn } from "~/lib/utils";
 
 interface LiveResultsDisplayProps {
   activeRun: TestRun | null;
@@ -71,13 +72,17 @@ export function LiveResultsDisplay({
               {activeRun.run_key}
             </CardDescription>
           </div>
+          {/* Hata Düzeltmesi: Badge bileşeninin `variant` prop'u 'success' değerini kabul etmez.
+              Bunun yerine, `cn` utility'si ile koşullu olarak renk sınıfları ekliyoruz.
+              'completed' durumu için yeşil, 'error' için kırmızı ve 'running' için varsayılan renkler kullanılacak.
+          */}
           <Badge
+            className={cn(
+              activeRun.status === "completed" && "bg-green-600 text-white",
+              activeRun.status === "error" && "bg-red-600 text-white"
+            )}
             variant={
-              activeRun.status === "completed"
-                ? "success"
-                : activeRun.status === "error"
-                ? "destructive"
-                : "default"
+              activeRun.status === "error" ? "destructive" : "default"
             }
           >
             {activeRun.status.toUpperCase()}
@@ -123,3 +128,4 @@ export function LiveResultsDisplay({
     </Card>
   );
 }
+
