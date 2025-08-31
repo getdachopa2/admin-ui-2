@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Koyu tema ve tipografi */
+:root {
+  color-scheme: dark;
+}
+html, body, #root {
+  height: 100%;
+}
+body {
+  @apply bg-base-950 text-base-100 antialiased;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-base-800 bg-base-900/60;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-medium
+           bg-primary text-primary-fg hover:opacity-90 transition;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 rounded-2xl px-4 py-2 font-medium
+           border border-base-700 text-base-200 hover:bg-base-900 transition;
+  }
+  .chip {
+    @apply rounded-full px-3 py-1 text-xs border border-base-700 text-base-200 hover:bg-base-900;
+  }
+  .input {
+    @apply w-full rounded-xl border border-base-800 bg-base-900 px-3 py-2 text-sm;
+  }
+  .pill {
+    @apply rounded-xl px-3 py-2 text-center text-xs ring-1;
+  }
+}
