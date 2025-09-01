@@ -1,25 +1,46 @@
 // src/hooks/useProgress.ts
 import { useEffect, useRef, useState } from 'react';
 import type { RunData, RunStep } from '@/types/n8n';
-import { longPollEvents } from '@/lib/n8nClient';
+import { longPollEvents, getProgress } from '@/lib/n8nClient';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** İçerikten terminal state sezgisi */
-const looksTerminal = (steps: RunStep[]) => {
+/** İçerikten terminal state sezgisi - cancel akışları için daha az agresif */
+const looksTerminal = (steps: RunStep[], flow: string) => {
   if (!steps.length) return false;
   const last = steps[steps.length - 1];
   const txt = `${last?.name ?? ''} ${last?.message ?? ''}`.toLowerCase();
+  
+  // Cancel/Refund akışları için terminal koşulları
+  if (flow === 'cancelRefund') {
+    return /final.*rapor|report.*final|tamamlan.*son|cancel.*success|iptal.*başar|refund.*success|iade.*başar/i.test(txt);
+  }
+  
+  // Payment akışları için daha geniş terminal kontrol
   return /final|rapor|report|tamamlan|payment.*success|ödeme.*başar/i.test(txt);
 };
 
 /**
  * waitSec: sunucuya uzun-poll timeout (saniye)
  * minGapMs: İKİ çağrı arası minimum bekleme (ms) – istemci tarafı throttle
+ * flow: 'payment' | 'cancelRefund' | 'dual' - hangi endpoint'i kullanacağı
+ * switchToCancelAfterPayment: payment tamamlandığında cancel endpoint'ine geç
  */
-export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000) {
+export function useProgress(
+  params: {
+    runKey: string | null;
+    flow?: 'payment' | 'cancelRefund' | 'dual';
+    switchToCancelAfterPayment?: boolean;
+    waitSec?: number;
+    minGapMs?: number;
+  }
+) {
+  const { runKey, flow = 'payment', switchToCancelAfterPayment = false, waitSec = 25, minGapMs = 2000 } = params;
   const [data, setData] = useState<RunData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>(
+    flow === 'dual' ? 'payment' : (flow as 'payment' | 'cancelRefund')
+  );
 
   const abortRef = useRef<AbortController | null>(null);
   const cursorRef = useRef(0);
@@ -30,6 +51,8 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
 
   useEffect(() => {
     if (!runKey) return;
+
+    console.log(`[useProgress] Starting with flow: ${flow}, runKey: ${runKey}`);
 
     // başlangıç state
     setData({
@@ -52,17 +75,23 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
 
     let cancelled = false;
     let emptyHits = 0; // arka arkaya boş dönüş sayacı (backoff için)
+    let errorCount = 0; // arka arkaya hata sayacı
 
     const loop = async () => {
       while (!cancelled && loopIdRef.current === myLoopId) {
         const t0 = Date.now();
         try {
+          // N8N progress endpoint sorunlu olabilir, önce events ile deneyelim
           const res = await longPollEvents(
             runKey,
             cursorRef.current,
             waitSec,
             abortRef.current!.signal,
+            currentFlow // Dinamik flow kullan
           );
+
+          // Başarılı istek sonrası error count'u sıfırla
+          errorCount = 0;
 
           const raw = Array.isArray(res?.events) ? res.events : [];
 
@@ -80,7 +109,8 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
           if (uniqueNewEvents.length === 0) {
             // Sadece cursor'ı güncelle ve döngüye devam et.
             cursorRef.current = typeof res?.nextCursor === 'number' ? res.nextCursor : cursorRef.current;
-            if (res?.status === 'completed' || res?.status === 'error' || !!res?.endTime) break;
+            // Sadece açık error durumunda dur
+            if (res?.status === 'error' && res?.endTime) break;
             await sleep(minGapMs); // Boş istek sonrası bekleme
             continue;
           }
@@ -103,11 +133,30 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
 
           const hasNew = newSteps.length > 0 || nextCursor !== cursorRef.current;
 
+          let terminalByContent = false;
+
           setData((prev) => {
             const steps = [...(prev?.steps ?? []), ...newSteps];
             const terminalByApi =
-              res?.status === 'completed' || res?.status === 'error' || !!res?.endTime;
-            const terminal = terminalByApi || looksTerminal(steps);
+              res?.status === 'error' && res?.endTime; // Sadece gerçek error durumu
+            terminalByContent = looksTerminal(steps, currentFlow);
+            const terminal = terminalByApi || terminalByContent;
+
+            // Payment tamamlandığında cancel endpoint'ine geç
+            if (switchToCancelAfterPayment && currentFlow === 'payment' && !terminal) {
+              // Payment adımlarında "payment success" veya benzeri var mı kontrol et
+              const hasPaymentSuccess = steps.some(step => {
+                const content = `${step.name || ''} ${step.message || ''}`.toLowerCase();
+                return /payment.*success|ödeme.*başar|payment.*complete|işlem.*başar/i.test(content);
+              });
+              
+              if (hasPaymentSuccess) {
+                console.log('[useProgress] Payment success detected, switching to cancelRefund endpoint');
+                setCurrentFlow('cancelRefund');
+                // Cursor'ı sıfırla ki cancel endpoint'inden baştan okusun
+                cursorRef.current = 0;
+              }
+            }
 
             return {
               status: terminal
@@ -125,8 +174,8 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
 
           cursorRef.current = nextCursor;
 
-          // çıkış koşulu
-          if (res?.status === 'completed' || res?.status === 'error' || !!res?.endTime) break;
+          // çıkış koşulu - error durumu veya terminal content algılandığında dur
+          if ((res?.status === 'error' && res?.endTime) || terminalByContent) break;
 
           // ---- İstemci-tarafı throttle + backoff ----
           const elapsed = Date.now() - t0;
@@ -137,8 +186,20 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
           await sleep(baseGap + backoff);
         } catch (e: any) {
           if (e?.name === 'AbortError' || cancelled || loopIdRef.current !== myLoopId) break;
-          setError(e?.message || String(e));
-          await sleep(3000);
+          
+          errorCount++;
+          console.error(`useProgress error (${errorCount}):`, e?.message || String(e));
+          setError(`Network error: ${e?.message || String(e)}`);
+          
+          // 5 hata sonrası polling'i durdur
+          if (errorCount >= 5) {
+            console.error('Too many errors, stopping progress polling');
+            break;
+          }
+          
+          // Exponential backoff: 3s, 6s, 12s, 24s, 48s
+          const backoffTime = Math.min(3000 * Math.pow(2, errorCount - 1), 48000);
+          await sleep(backoffTime);
         }
       }
     };
@@ -150,7 +211,7 @@ export function useProgress(runKey: string | null, waitSec = 25, minGapMs = 2000
       abortRef.current?.abort();
       abortRef.current = null;
     };
-  }, [runKey, waitSec, minGapMs]);
+  }, [runKey, waitSec, minGapMs, currentFlow, switchToCancelAfterPayment]);
 
   return { data, error };
 }

@@ -21,9 +21,40 @@ export default function KanalKontrolBotu() {
 
   // Çalıştırma / progress
   const [runKey, setRunKey] = useState<string | null>(null);
-  const { data: prog, error: progErr } = useProgress(runKey, 25, 2000);
+  const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>('payment');
+  const [isAllFlow, setIsAllFlow] = useState(false); // ALL akışı mı?
+  
+  const { data: prog, error: progErr } = useProgress({ 
+    runKey, 
+    flow: isAllFlow ? 'dual' : currentFlow, 
+    switchToCancelAfterPayment: isAllFlow 
+  });
   const steps = prog?.steps ?? [];
   const running = prog?.status === "running";
+
+  // Akış türüne göre tamamlanma kontrolü
+  const isCompleted = useMemo(() => {
+    if (!prog || running) return false;
+    
+    // Status-based kontrol
+    if (prog.status === 'completed' || prog.status === 'error') return true;
+    
+    // Content-based kontrol: son adımda terminal kelimeler var mı?
+    if (steps.length > 0) {
+      const lastStep = steps[steps.length - 1];
+      const content = `${lastStep.name || ''} ${lastStep.message || ''}`.toLowerCase();
+      
+      if (currentFlow === 'cancelRefund') {
+        // Cancel/Refund akışı için spesifik terminal kelimeler
+        return /cancel.*success|iptal.*başar|refund.*success|iade.*başar|işlem.*tamamlan|final.*rapor/i.test(content);
+      } else {
+        // Payment akışı için genel terminal kelimeler
+        return /payment.*success|ödeme.*başar|işlem.*tamamlan|final.*rapor|tamamlan/i.test(content);
+      }
+    }
+    
+    return false;
+  }, [prog, running, steps, currentFlow]);
 
   // Ticker: sunucudan event gelmeden hemen görünsün diye ilk yerel step
   const [echoSteps, setEchoSteps] = useState<
@@ -44,9 +75,18 @@ export default function KanalKontrolBotu() {
 
     // Scenario'lara göre action belirle
     let action = 'payment';
-    if (scenarios.includes('CANCEL')) action = 'cancel';
-    else if (scenarios.includes('REFUND')) action = 'refund';
-    else if (scenarios.includes('ALL')) action = 'payment'; // ALL durumunda payment ile başla
+    let flowType: 'payment' | 'cancelRefund' | 'all' = 'payment';
+    
+    if (scenarios.includes('CANCEL')) {
+      action = 'cancel';
+      flowType = 'cancelRefund';
+    } else if (scenarios.includes('REFUND')) {
+      action = 'refund';
+      flowType = 'cancelRefund';
+    } else if (scenarios.includes('ALL')) {
+      action = 'payment'; // ALL durumunda payment ile başla, sonunda cancel tetikler
+      flowType = 'all'; // İki endpoint'i de dinle
+    }
 
     const payload = {
       env: env || 'stb',
@@ -105,10 +145,16 @@ export default function KanalKontrolBotu() {
       const payload = buildN8nPayload(wizardData);
       console.log('N8N Payload:', payload); // Debug için
       
-      // Action'a göre doğru endpoint'i seç
-      const startFunction = (payload.action === 'cancel' || payload.action === 'refund') 
-        ? startCancelOrRefund 
-        : startPayment;
+      // Action'a göre doğru endpoint'i ve flow'u seç
+      const isCancelRefundFlow = payload.action === 'cancel' || payload.action === 'refund';
+      const isAllFlow = wizardData.scenarios.includes('ALL');
+      const startFunction = isCancelRefundFlow ? startCancelOrRefund : startPayment;
+      
+      // Flow tipini ayarla
+      const newFlow = isCancelRefundFlow ? 'cancelRefund' : 'payment';
+      console.log(`[KanalKontrolBotu] Setting flow to: ${newFlow}, action: ${payload.action}, isAll: ${isAllFlow}`);
+      setCurrentFlow(newFlow);
+      setIsAllFlow(isAllFlow);
         
       const res = await rateLimit.executeRequest(() => startFunction(payload));
       setRunKey(res.runKey);
@@ -173,12 +219,38 @@ export default function KanalKontrolBotu() {
               </div>
               <div className="w-56">
                 {running ? (
-                  <IndeterminateBar message="Test çalışıyor..." />
+                  <IndeterminateBar message={`${currentFlow === 'cancelRefund' ? 'Cancel/Refund' : 'Payment'} testi çalışıyor...`} />
+                ) : isCompleted ? (
+                  <SolidProgress 
+                    value={100} 
+                    message={currentFlow === 'cancelRefund' ? 'Cancel/Refund Tamamlandı' : 'Payment Tamamlandı'} 
+                  />
                 ) : (
-                  <SolidProgress value={100} message="Tamamlandı" />
+                  <SolidProgress value={0} message="Bekliyor..." />
                 )}
               </div>
             </div>
+            
+            {/* Webhook dinleme bilgisi */}
+            <div className="mt-2 text-xs text-base-500">
+              📡 Webhook dinleniyor: <code className="rounded bg-base-800 px-1 text-base-200">
+                {isAllFlow ? (
+                  currentFlow === 'payment' 
+                    ? '/webhook-test/payment-test/events → /webhook-test/payment-test/cancel-refund/events' 
+                    : '/webhook-test/payment-test/cancel-refund/events'
+                ) : (
+                  currentFlow === 'payment' 
+                    ? '/webhook-test/payment-test/events' 
+                    : '/webhook-test/payment-test/cancel-refund/events'
+                )}
+              </code>
+              {isAllFlow && (
+                <span className="ml-2 text-yellow-400 text-xs">
+                  (Payment başarısı sonrası Cancel endpoint'ine geçiş)
+                </span>
+              )}
+            </div>
+            
             {progErr && <div className="mt-2 text-sm text-red-400">Hata: {progErr}</div>}
 
             {/* Adımlar */}
@@ -210,11 +282,18 @@ export default function KanalKontrolBotu() {
 
           {/* Detaylı Rapor */}
           <div className="card p-6">
-            <div className="mb-4 font-medium">Detaylı Test Raporu</div>
+            <div className="mb-4 font-medium">
+              Detaylı Test Raporu
+              {currentFlow === 'cancelRefund' && <span className="ml-2 text-xs text-blue-400">(Cancel/Refund Akışı)</span>}
+              {currentFlow === 'payment' && <span className="ml-2 text-xs text-green-400">(Payment Akışı)</span>}
+            </div>
 
-            {running && !prog?.result && (
+            {running && !isCompleted && (
               <div className="rounded-xl border border-base-800 bg-base-900 p-4 text-sm text-base-400">
-                Test sürüyor... Detaylar hazır olduğunda görünecek.
+                {currentFlow === 'cancelRefund' 
+                  ? 'Cancel/Refund testi sürüyor... Detaylar hazır olduğunda görünecek.' 
+                  : 'Payment testi sürüyor... Detaylar hazır olduğunda görünecek.'
+                }
               </div>
             )}
 

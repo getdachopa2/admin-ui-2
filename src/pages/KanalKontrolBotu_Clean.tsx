@@ -143,7 +143,7 @@ export default function KanalKontrolBotu() {
 
   // Çalıştırma / progress
   const [runKey, setRunKey] = useState<string | null>(null);
-  const { data: prog, error: progErr } = useProgress(runKey, 25, 2000);
+  const { data: prog, error: progErr } = useProgress({ runKey, waitSec: 25, minGapMs: 2000 });
   const steps = prog?.steps ?? [];
   const running = prog?.status === "running";
 

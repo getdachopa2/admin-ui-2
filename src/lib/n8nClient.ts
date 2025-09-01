@@ -5,7 +5,9 @@ const P_START         = String(import.meta.env.VITE_N8N_PAYMENT_START      || '/
 // YENİ: İptal/iade için yeni endpoint yolu eklendi. .env dosyanıza VITE_N8N_CANCEL_REFUND_START olarak ekleyebilirsiniz.
 const P_CANCEL_REFUND = String(import.meta.env.VITE_N8N_CANCEL_REFUND_START || '/webhook/payment-test/cancel-refund-test');
 const P_PROGRESS      = String(import.meta.env.VITE_N8N_PAYMENT_PROGRESS || '/webhook/payment-test/progress');
+const P_CANCEL_REFUND_PROGRESS = String(import.meta.env.VITE_N8N_CANCEL_REFUND_PROGRESS || '/webhook/payment-test/cancel-refund/progress');
 const P_EVENTS        = String(import.meta.env.VITE_N8N_EVENTS           || '/webhook/payment-test/events');
+const P_CANCEL_REFUND_EVENTS = String(import.meta.env.VITE_N8N_CANCEL_REFUND_EVENTS || '/webhook/payment-test/cancel-refund/events');
 const P_TEST_CARDS    = String(import.meta.env.VITE_N8N_TEST_CARDS       || '/webhook/query/get-cards');
 const P_CANDIDATES    = String(import.meta.env.VITE_N8N_CANDIDATES       || '/webhook/payment-test/candidates');
 const BASIC_RAW       = String(import.meta.env.VITE_N8N_BASIC || ''); // "user:pass"
@@ -45,7 +47,10 @@ async function getJSON<T>(path: string, query?: Record<string, any>, signal?: Ab
   const url = new URL(`${BASE}${path}`);
   if (query) {
     Object.entries(query).forEach(([k, v]) => {
-      if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
+      if (v !== undefined && v !== null) {
+        // RunKey'i encode etmeden ekle
+        url.searchParams.set(k, String(v));
+      }
     });
   }
   const res = await fetch(url.toString(), { method: 'GET', headers: buildHeaders(), signal, credentials: 'omit' });
@@ -101,12 +106,15 @@ export async function startCancelOrRefund(body: StartPayload, signal?: AbortSign
     return req<N8nStartResponse>(P_CANCEL_REFUND, { method: 'POST', body: JSON.stringify(body), signal });
 }
 
-export async function getProgress(runKey: string) {
-  return getJSON<RunData>(P_PROGRESS, { runKey });
+export async function getProgress(runKey: string, flow: 'payment' | 'cancelRefund' = 'payment') {
+  const path = flow === 'payment' ? P_PROGRESS : P_CANCEL_REFUND_PROGRESS;
+  return getJSON<RunData>(path, { runKey });
 }
 
-export async function longPollEvents(runKey: string, cursor = 0, waitSec = 25, signal?: AbortSignal) {
-  const res = await getJSON<Partial<N8nEventsResponse>>(P_EVENTS, { runKey, cursor, waitSec }, signal);
+export async function longPollEvents(runKey: string, cursor = 0, waitSec = 25, signal?: AbortSignal, flow: 'payment' | 'cancelRefund' = 'payment') {
+  const eventsPath = flow === 'payment' ? P_EVENTS : P_CANCEL_REFUND_EVENTS;
+  console.log(`[longPollEvents] Flow: ${flow}, Path: ${eventsPath}, URL: ${BASE}${eventsPath}`);
+  const res = await getJSON<Partial<N8nEventsResponse>>(eventsPath, { runKey, cursor, waitSec }, signal);
   return {
     runKey,
     status: (res?.status as any) || 'running',
