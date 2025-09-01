@@ -113,7 +113,7 @@ export async function getProgress(runKey: string, flow: 'payment' | 'cancelRefun
 
 export async function longPollEvents(runKey: string, cursor = 0, waitSec = 25, signal?: AbortSignal, flow: 'payment' | 'cancelRefund' = 'payment') {
   const eventsPath = flow === 'payment' ? P_EVENTS : P_CANCEL_REFUND_EVENTS;
-  console.log(`[longPollEvents] Flow: ${flow}, Path: ${eventsPath}, URL: ${BASE}${eventsPath}`);
+  console.log(`[longPollEvents] Flow: ${flow}, Path: ${eventsPath}, URL: ${BASE}${eventsPath}, RunKey: ${runKey}`);
   const res = await getJSON<Partial<N8nEventsResponse>>(eventsPath, { runKey, cursor, waitSec }, signal);
   return {
     runKey,

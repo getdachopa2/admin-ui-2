@@ -1,6 +1,7 @@
 // src/components/DetailedTestReport.tsx
 import { useState } from 'react';
 import CodeBlock from './CodeBlock';
+import { usePDFExport } from '../hooks/usePDFExport';
 
 interface TestStep {
   id: string;
@@ -29,6 +30,14 @@ type StepData = TestStep | N8NStep;
 
 interface DetailedTestReportProps {
   steps: StepData[];
+  testSummary?: {
+    scenario?: string;
+    environment?: string;
+    channel?: string;
+    application?: string;
+    cards?: any[];
+    cancelRefund?: any[];
+  };
 }
 
 // Type guard: N8NStep olup olmadığını kontrol eder
@@ -104,10 +113,40 @@ function convertN8NStepToTestStep(step: N8NStep, index: number): TestStep {
   };
 }
 
-export default function DetailedTestReport({ steps }: DetailedTestReportProps) {
+export default function DetailedTestReport({ steps, testSummary }: DetailedTestReportProps) {
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const { exportToPDF, isExporting } = usePDFExport();
+
+  const handleExportPDF = async () => {
+    try {
+      console.log('PDF export başlatılıyor...');
+      console.log('Test summary:', testSummary);
+      console.log('Normalized steps:', normalizedSteps.length, 'adet');
+      
+      await exportToPDF('detailed-test-report', {
+        title: 'Kanal Kontrol Bot - Test Raporu',
+        filename: 'kanal-kontrol-test-raporu',
+        includeTimestamp: true,
+        testSummary,
+        testSteps: normalizedSteps
+      });
+      
+      console.log('PDF export başarılı!');
+    } catch (error) {
+      console.error('PDF export hatası detayı:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      // Daha detaylı hata mesajı
+      let errorMessage = 'PDF export sırasında hata oluştu.';
+      if (error instanceof Error) {
+        errorMessage += ` Hata: ${error.message}`;
+      }
+      
+      alert(errorMessage + ' Lütfen browser console\'unu kontrol edin.');
+    }
+  };
 
   // N8N step'leri varsa onları dönüştür, yoksa olduğu gibi kullan
   const normalizedSteps: TestStep[] = steps
@@ -252,7 +291,32 @@ export default function DetailedTestReport({ steps }: DetailedTestReportProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div id="detailed-test-report" className="space-y-4">
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleExportPDF}
+          disabled={isExporting}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white text-sm rounded-lg transition-colors"
+        >
+          {isExporting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              PDF oluşturuluyor...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              PDF İndir
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Test Steps */}
+      <div className="space-y-2">
       {Object.entries(groupedSteps).map(([type, identifierGroups]) => (
         <div key={type} className="border border-neutral-700 rounded-lg overflow-hidden">
           {/* Type Header (Token Alma, Ödeme, etc.) */}
@@ -348,6 +412,7 @@ export default function DetailedTestReport({ steps }: DetailedTestReportProps) {
           )}
         </div>
       ))}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,43 @@
 import { useMemo, useState } from 'react';
 
+// XML Syntax Highlighter Component
+function XMLHighlighter({ text }: { text: string }) {
+  const highlighted = useMemo(() => {
+    // HTML encode first to prevent XSS
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    
+    return escaped
+      // XML tags (opening, closing, self-closing)
+      .replace(/(&lt;\/?[a-zA-Z0-9:_-]+[^&]*?&gt;)/g, 
+        '<span class="text-blue-300">$1</span>')
+      // Attribute names
+      .replace(/(\s+)([a-zA-Z0-9:_-]+)(=)/g, 
+        '$1<span class="text-yellow-300">$2</span><span class="text-gray-400">$3</span>')
+      // Attribute values
+      .replace(/(=)(&quot;|&#39;)([^&]*?)\2/g, 
+        '<span class="text-gray-400">$1</span><span class="text-green-300">$2$3$2</span>')
+      // XML declaration
+      .replace(/(&lt;\?xml[^&]*?\?&gt;)/g, 
+        '<span class="text-purple-300">$1</span>')
+      // Comments
+      .replace(/(&lt;!--.*?--&gt;)/gs, 
+        '<span class="text-gray-500">$1</span>')
+      // CDATA
+      .replace(/(&lt;!\[CDATA\[.*?\]\]&gt;)/gs, 
+        '<span class="text-orange-300">$1</span>')
+      // SOAP-specific namespaces
+      .replace(/(soap:|soapenv:|ns\d+:)/g, 
+        '<span class="text-cyan-300">$1</span>');
+  }, [text]);
+
+  return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
+}
+
 /** basit JSON/XML beautifier + kopyala butonlu codeblock */
 export default function CodeBlock({
   value,
@@ -71,8 +109,16 @@ export default function CodeBlock({
       </div>
 
       {/* code */}
-      <pre className="max-h-[520px] overflow-auto p-3 text-[13px] leading-5 text-emerald-200">
-        <code>{shown}</code>
+      <pre className="max-h-[520px] overflow-auto p-3 text-[13px] leading-5">
+        <code>
+          {effectiveLang === 'xml' ? (
+            <XMLHighlighter text={shown} />
+          ) : effectiveLang === 'json' ? (
+            <span className="text-emerald-200">{shown}</span>
+          ) : (
+            <span className="text-base-200">{shown}</span>
+          )}
+        </code>
       </pre>
     </div>
   );
@@ -104,20 +150,70 @@ function tryPrettyJSON(s: string) {
 }
 function tryPrettyXML(s: string) {
   try {
-    // çok basit girinti: tag aralarına \n koy, seviyeye göre boşluk ekle
-    const xml = s.replace(/>\s*</g, '><').replace(/></g, '>\n<');
-    const lines = xml.split('\n');
-    let lvl = 0;
-    return lines
-      .map((line) => {
-        const openClose = /^<\/.+>/.test(line);
-        const self = /\/>$/.test(line) || /^<\?.+\?>$/.test(line) || /^<!.+>$/.test(line);
-        if (openClose) lvl = Math.max(0, lvl - 1);
-        const pad = '  '.repeat(lvl);
-        if (!openClose && !self && /^<[^/].+>.*$/.test(line) && !/>.*</.test(line)) lvl++;
-        return pad + line;
-      })
-      .join('\n');
+    // SOAP XML için gelişmiş formatting
+    let xml = s.trim();
+    
+    // Gereksiz boşlukları temizle
+    xml = xml.replace(/>\s+</g, '><');
+    
+    // XML header'ı ayrı satıra al
+    xml = xml.replace(/(<\?xml[^>]*\?>)/, '$1\n');
+    
+    // SOAP namespace'leri düzenle - tek satırda uzun attribute'ları böl
+    xml = xml.replace(/(<soap:Envelope[^>]*?)(\s+xmlns[^>]*?>)/g, (match, start, attrs) => {
+      const formattedAttrs = attrs.split(/\s+xmlns/).map((attr, index) => {
+        if (index === 0) return attr;
+        return '\n  xmlns' + attr;
+      }).join('');
+      return start + formattedAttrs;
+    });
+    
+    // Tag'ler arasına newline ekle
+    xml = xml.replace(/>\s*</g, '>\n<');
+    
+    // CDATA sections'ı koru
+    const cdataPlaceholders: string[] = [];
+    xml = xml.replace(/<!\[CDATA\[.*?\]\]>/gs, (match) => {
+      const placeholder = `__CDATA_${cdataPlaceholders.length}__`;
+      cdataPlaceholders.push(match);
+      return placeholder;
+    });
+    
+    const lines = xml.split('\n').filter(line => line.trim());
+    let indentLevel = 0;
+    const indentSize = 2;
+    
+    const formatted = lines.map(line => {
+      const trimmed = line.trim();
+      
+      // Closing tag ise indent'i azalt
+      if (trimmed.startsWith('</')) {
+        indentLevel = Math.max(0, indentLevel - 1);
+      }
+      
+      const indent = ' '.repeat(indentLevel * indentSize);
+      
+      // Opening tag ise (self-closing değilse) indent'i artır
+      if (trimmed.startsWith('<') && 
+          !trimmed.startsWith('</') && 
+          !trimmed.endsWith('/>') && 
+          !trimmed.startsWith('<?') && 
+          !trimmed.startsWith('<!')) {
+        
+        // Eğer tag içinde content varsa (örn: <tag>content</tag>) indent artırma
+        if (!trimmed.includes('></')) {
+          indentLevel++;
+        }
+      }
+      
+      return indent + trimmed;
+    }).join('\n');
+    
+    // CDATA placeholder'larını geri koy
+    return cdataPlaceholders.reduce((result, cdata, index) => {
+      return result.replace(`__CDATA_${index}__`, cdata);
+    }, formatted);
+    
   } catch {
     return s;
   }

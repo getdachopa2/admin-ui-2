@@ -31,11 +31,12 @@ export function useProgress(
     runKey: string | null;
     flow?: 'payment' | 'cancelRefund' | 'dual';
     switchToCancelAfterPayment?: boolean;
+    onPaymentSuccess?: (newRunKey?: string) => void; // Payment başarısında çağrılacak callback, yeni runKey ile
     waitSec?: number;
     minGapMs?: number;
   }
 ) {
-  const { runKey, flow = 'payment', switchToCancelAfterPayment = false, waitSec = 25, minGapMs = 2000 } = params;
+  const { runKey, flow = 'payment', switchToCancelAfterPayment = false, onPaymentSuccess, waitSec = 25, minGapMs = 2000 } = params;
   const [data, setData] = useState<RunData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>(
@@ -150,11 +151,25 @@ export function useProgress(
                 return /payment.*success|ödeme.*başar|payment.*complete|işlem.*başar/i.test(content);
               });
               
-              if (hasPaymentSuccess) {
-                console.log('[useProgress] Payment success detected, switching to cancelRefund endpoint');
-                setCurrentFlow('cancelRefund');
-                // Cursor'ı sıfırla ki cancel endpoint'inden baştan okusun
-                cursorRef.current = 0;
+              // Yeni cancel/refund runKey'i var mı kontrol et
+              const cancelRunKeyStep = steps.find(step => {
+                const content = `${step.name || ''} ${step.message || ''}`.toLowerCase();
+                return /cancel.*started|refund.*started|cancel.*runkey|refund.*runkey/i.test(content);
+              });
+              
+              if (hasPaymentSuccess && cancelRunKeyStep) {
+                console.log('[useProgress] Payment success and cancel runKey detected');
+                // Response'da yeni runKey'i ara
+                const response = cancelRunKeyStep.response as any;
+                const newRunKey = response?.runKey || 
+                                 response?.cancelRunKey ||
+                                 cancelRunKeyStep.message?.match(/runkey[:\s]+([a-zA-Z0-9\-_]+)/i)?.[1];
+                
+                if (newRunKey && onPaymentSuccess) {
+                  console.log('[useProgress] Found new cancel runKey:', newRunKey);
+                  onPaymentSuccess(newRunKey);
+                  return prev;
+                }
               }
             }
 

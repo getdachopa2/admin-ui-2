@@ -23,11 +23,28 @@ export default function KanalKontrolBotu() {
   const [runKey, setRunKey] = useState<string | null>(null);
   const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>('payment');
   const [isAllFlow, setIsAllFlow] = useState(false); // ALL akışı mı?
+  const [lastWizardData, setLastWizardData] = useState<any>(null); // Wizard'dan gelen data'yı sakla
+  
+  // Payment başarısında cancel/refund işlemini başlat
+  const handlePaymentSuccess = async (newRunKey?: string) => {
+    if (!isAllFlow) return;
+    
+    if (newRunKey) {
+      console.log('[KanalKontrolBotu] Payment success, switching to cancel/refund flow with new runKey:', newRunKey);
+      
+      // Yeni runKey'i set et ve flow'u değiştir
+      setRunKey(newRunKey);
+      setCurrentFlow('cancelRefund');
+    } else {
+      console.log('[KanalKontrolBotu] Payment success but no new runKey found');
+    }
+  };
   
   const { data: prog, error: progErr } = useProgress({ 
     runKey, 
-    flow: isAllFlow ? 'dual' : currentFlow, 
-    switchToCancelAfterPayment: isAllFlow 
+    flow: currentFlow, 
+    switchToCancelAfterPayment: isAllFlow,
+    onPaymentSuccess: handlePaymentSuccess
   });
   const steps = prog?.steps ?? [];
   const running = prog?.status === "running";
@@ -141,6 +158,9 @@ export default function KanalKontrolBotu() {
     }
 
     try {
+      // Wizard data'sını sakla (PDF için)
+      setLastWizardData(wizardData);
+      
       // Wizard verilerini N8N payload'ına dönüştür
       const payload = buildN8nPayload(wizardData);
       console.log('N8N Payload:', payload); // Debug için
@@ -231,25 +251,6 @@ export default function KanalKontrolBotu() {
               </div>
             </div>
             
-            {/* Webhook dinleme bilgisi */}
-            <div className="mt-2 text-xs text-base-500">
-              📡 Webhook dinleniyor: <code className="rounded bg-base-800 px-1 text-base-200">
-                {isAllFlow ? (
-                  currentFlow === 'payment' 
-                    ? '/webhook-test/payment-test/events → /webhook-test/payment-test/cancel-refund/events' 
-                    : '/webhook-test/payment-test/cancel-refund/events'
-                ) : (
-                  currentFlow === 'payment' 
-                    ? '/webhook-test/payment-test/events' 
-                    : '/webhook-test/payment-test/cancel-refund/events'
-                )}
-              </code>
-              {isAllFlow && (
-                <span className="ml-2 text-yellow-400 text-xs">
-                  (Payment başarısı sonrası Cancel endpoint'ine geçiş)
-                </span>
-              )}
-            </div>
             
             {progErr && <div className="mt-2 text-sm text-red-400">Hata: {progErr}</div>}
 
@@ -298,7 +299,19 @@ export default function KanalKontrolBotu() {
             )}
 
             {/* Hiyerarşik Test Raporu */}
-            <DetailedTestReport steps={listSteps} />
+            <DetailedTestReport 
+              steps={listSteps} 
+              testSummary={lastWizardData ? {
+                scenario: lastWizardData.scenarios?.join(', ') || undefined,
+                environment: lastWizardData.env || undefined,
+                channel: lastWizardData.channelId || undefined,
+                application: lastWizardData.application?.applicationName || undefined,
+                cards: lastWizardData.cardSelectionMode === 'manual' 
+                  ? lastWizardData.manualCards || []
+                  : undefined,
+                cancelRefund: lastWizardData.cancelRefund ? [lastWizardData.cancelRefund] : undefined
+              } : undefined}
+            />
           </div>
         </>
       )}
