@@ -8,6 +8,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // vite.config.ts
 export default defineConfig({
   plugins: [react()],
-  server: { proxy: { '/webhook': { target: 'http://localhost:5701', changeOrigin: true } } },
+  server: { 
+    proxy: { 
+      '/webhook': { target: 'http://localhost:5701', changeOrigin: true },
+      '/api': { target: 'http://localhost:3001', changeOrigin: true }
+    } 
+  },
   resolve:{ alias:{ '@': resolve(__dirname,'src') } }
 });

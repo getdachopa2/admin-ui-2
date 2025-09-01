@@ -8,6 +8,28 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** İçerikten terminal state sezgisi - cancel akışları için daha az agresif */
 const looksTerminal = (steps: RunStep[], flow: string) => {
   if (!steps.length) return false;
+  
+  // Son birkaç adımı kontrol et (sadece son adım değil)
+  const lastFewSteps = steps.slice(-3);
+  
+  for (const step of lastFewSteps) {
+    const stepName = (step?.name ?? '').toLowerCase();
+    const stepMessage = (step?.message ?? '').toLowerCase();
+    const txt = `${stepName} ${stepMessage}`;
+    
+    // "Done" adımını direkt kontrol et
+    if (stepName === 'done' || stepMessage === 'done' || /^done$/i.test(stepName)) {
+      console.log('[useProgress] Terminal detected: Done step found', step);
+      return true;
+    }
+    
+    // "Test tamamlandı" mesajlarını kontrol et  
+    if (/test.*tamamland|test.*completed|rapor.*hazır|report.*ready/i.test(txt)) {
+      console.log('[useProgress] Terminal detected: Test completion message found', step);
+      return true;
+    }
+  }
+  
   const last = steps[steps.length - 1];
   const txt = `${last?.name ?? ''} ${last?.message ?? ''}`.toLowerCase();
   
@@ -42,6 +64,33 @@ export function useProgress(
   const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>(
     flow === 'dual' ? 'payment' : (flow as 'payment' | 'cancelRefund')
   );
+
+  // Flow parametresi değiştiğinde currentFlow'u güncelle ve polling'i yeniden başlat
+  useEffect(() => {
+    if (flow !== 'dual') {
+      const newFlow = flow as 'payment' | 'cancelRefund';
+      if (currentFlow !== newFlow) {
+        console.log(`[useProgress] Flow changed from ${currentFlow} to ${newFlow}, forcing restart`);
+        setCurrentFlow(newFlow);
+        
+        // Flow değiştiğinde mevcut polling'i durdur ve yeniden başlat
+        if (runKey) {
+          abortRef.current?.abort();
+          cursorRef.current = 0;
+          seenSeqRef.current = new Set();
+          
+          // Yeni polling'i başlatmak için state'i resetle
+          setData({
+            status: 'running',
+            startTime: new Date().toISOString(),
+            endTime: null,
+            steps: [],
+          });
+          setError(null);
+        }
+      }
+    }
+  }, [flow, runKey, currentFlow]);
 
   const abortRef = useRef<AbortController | null>(null);
   const cursorRef = useRef(0);
@@ -79,6 +128,7 @@ export function useProgress(
     let errorCount = 0; // arka arkaya hata sayacı
 
     const loop = async () => {
+      console.log('[useProgress] Starting polling loop for runKey:', runKey);
       while (!cancelled && loopIdRef.current === myLoopId) {
         const t0 = Date.now();
         try {
@@ -112,6 +162,18 @@ export function useProgress(
             cursorRef.current = typeof res?.nextCursor === 'number' ? res.nextCursor : cursorRef.current;
             // Sadece açık error durumunda dur
             if (res?.status === 'error' && res?.endTime) break;
+            
+            // Mevcut state'ten terminal durumu kontrol et
+            setData((prev) => {
+              if (prev && prev.steps && looksTerminal(prev.steps, currentFlow)) {
+                console.log('[useProgress] Terminal detected during empty response, stopping polling');
+                cancelled = true;
+              }
+              return prev; // State'i değiştirme
+            });
+            
+            if (cancelled) break;
+            
             await sleep(minGapMs); // Boş istek sonrası bekleme
             continue;
           }
@@ -134,27 +196,56 @@ export function useProgress(
 
           const hasNew = newSteps.length > 0 || nextCursor !== cursorRef.current;
 
+          // Terminal durumunu setData dışında hesapla
           let terminalByContent = false;
+          let terminalByApi = false;
 
           setData((prev) => {
             const steps = [...(prev?.steps ?? []), ...newSteps];
-            const terminalByApi =
-              res?.status === 'error' && res?.endTime; // Sadece gerçek error durumu
+            terminalByApi = !!(res?.status === 'error' && res?.endTime); // Sadece gerçek error durumu
             terminalByContent = looksTerminal(steps, currentFlow);
             const terminal = terminalByApi || terminalByContent;
 
+            console.log('[useProgress] Terminal check:', {
+              terminalByApi,
+              terminalByContent,
+              terminal,
+              stepsCount: steps.length,
+              lastStepName: steps[steps.length - 1]?.name
+            });
+
             // Payment tamamlandığında cancel endpoint'ine geç
             if (switchToCancelAfterPayment && currentFlow === 'payment' && !terminal) {
+              console.log('[useProgress] Checking for payment success...', { 
+                switchToCancelAfterPayment, 
+                currentFlow, 
+                terminal, 
+                stepsCount: steps.length 
+              });
+              
               // Payment adımlarında "payment success" veya benzeri var mı kontrol et
               const hasPaymentSuccess = steps.some(step => {
                 const content = `${step.name || ''} ${step.message || ''}`.toLowerCase();
-                return /payment.*success|ödeme.*başar|payment.*complete|işlem.*başar/i.test(content);
+                const isSuccess = /payment.*success|ödeme.*başar|payment.*complete|işlem.*başar/i.test(content);
+                if (isSuccess) {
+                  console.log('[useProgress] Found payment success step:', step.name, step.message);
+                }
+                return isSuccess;
               });
               
               // Yeni cancel/refund runKey'i var mı kontrol et
               const cancelRunKeyStep = steps.find(step => {
                 const content = `${step.name || ''} ${step.message || ''}`.toLowerCase();
-                return /cancel.*started|refund.*started|cancel.*runkey|refund.*runkey/i.test(content);
+                const hasCancelKey = /cancel.*started|refund.*started|cancel.*runkey|refund.*runkey/i.test(content);
+                if (hasCancelKey) {
+                  console.log('[useProgress] Found cancel runKey step:', step.name, step.message);
+                }
+                return hasCancelKey;
+              });
+              
+              console.log('[useProgress] Payment success check result:', { 
+                hasPaymentSuccess, 
+                hasCancelRunKeyStep: !!cancelRunKeyStep 
               });
               
               if (hasPaymentSuccess && cancelRunKeyStep) {
@@ -166,8 +257,19 @@ export function useProgress(
                                  cancelRunKeyStep.message?.match(/runkey[:\s]+([a-zA-Z0-9\-_]+)/i)?.[1];
                 
                 if (newRunKey && onPaymentSuccess) {
-                  console.log('[useProgress] Found new cancel runKey:', newRunKey);
-                  onPaymentSuccess(newRunKey);
+                  // RunKey'den başındaki = işaretini temizle
+                  const cleanNewRunKey = newRunKey.replace(/^=+/, '');
+                  console.log('[useProgress] Found new cancel runKey:', newRunKey, '-> cleaned:', cleanNewRunKey);
+                  console.log('[useProgress] Switching to cancelRefund flow and restarting polling');
+                  
+                  // Flow'u değiştir ve polling'i yeniden başlat
+                  setCurrentFlow('cancelRefund');
+                  
+                  // Mevcut polling'i durdur
+                  cancelled = true;
+                  abortRef.current?.abort();
+                  
+                  onPaymentSuccess(cleanNewRunKey);
                   return prev;
                 }
               }
@@ -190,7 +292,14 @@ export function useProgress(
           cursorRef.current = nextCursor;
 
           // çıkış koşulu - error durumu veya terminal content algılandığında dur
-          if ((res?.status === 'error' && res?.endTime) || terminalByContent) break;
+          if (terminalByApi || terminalByContent) {
+            console.log('[useProgress] Terminal condition met, stopping polling:', {
+              terminalByApi,
+              terminalByContent,
+              lastStep: newSteps[newSteps.length - 1]?.name
+            });
+            break;
+          }
 
           // ---- İstemci-tarafı throttle + backoff ----
           const elapsed = Date.now() - t0;
@@ -217,6 +326,7 @@ export function useProgress(
           await sleep(backoffTime);
         }
       }
+      console.log('[useProgress] Polling loop ended for runKey:', runKey, 'cancelled:', cancelled);
     };
 
     loop();

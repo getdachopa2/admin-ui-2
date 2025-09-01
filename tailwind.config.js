@@ -32,6 +32,20 @@ export default {
       },
       boxShadow: {
         soft: "0 8px 24px -8px rgba(0,0,0,0.5)"
+      },
+      animation: {
+        "in": "fadeIn 0.5s ease-out",
+        "slide-in-from-bottom-4": "slideInFromBottom 0.5s ease-out"
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
+        },
+        slideInFromBottom: {
+          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
+        }
       }
     }
   },

@@ -35,5 +35,9 @@ export function saveRun(run: SavedRun) {
   }
 }
 
+export function getAllRuns(): SavedRun[] {
+  return loadRuns();
+}
+
 // opsiyonel: default export (yanlış import edilse bile çalışsın)
-export default { loadRuns, saveRun };
+export default { loadRuns, saveRun, getAllRuns };

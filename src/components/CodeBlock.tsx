@@ -1,5 +1,45 @@
 import { useMemo, useState } from 'react';
 
+// JSON Syntax Highlighter Component with Status-based Highlighting
+function JSONHighlighter({ text, status = 'neutral' }: { text: string; status?: 'success' | 'error' | 'neutral' }) {
+  const highlighted = useMemo(() => {
+    // HTML encode first to prevent XSS
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    
+    // Durum bazlı renkler
+    const keyColor = 'text-white'; // Parametre isimleri her zaman beyaz
+    const valueColor = status === 'success' ? 'text-emerald-400' : 
+                      status === 'error' ? 'text-red-400' : 'text-neutral-300';
+    
+    return escaped
+      // String values (parametre isimleri)
+      .replace(/(&quot;[^&]*?&quot;)(:)/g, 
+        `<span class="${keyColor}">$1</span><span class="text-gray-400">$2</span>`)
+      // String values (değerler)
+      .replace(/(:\s*)(&quot;[^&]*?&quot;)/g, 
+        `$1<span class="${valueColor}">$2</span>`)
+      // Numbers
+      .replace(/(:\s*)(\d+\.?\d*)/g, 
+        `$1<span class="${valueColor}">$2</span>`)
+      // Booleans
+      .replace(/(:\s*)(true|false)/g, 
+        `$1<span class="${valueColor}">$2</span>`)
+      // null
+      .replace(/(:\s*)(null)/g, 
+        '$1<span class="text-gray-500">$2</span>')
+      // Brackets and braces
+      .replace(/([{}[\],])/g, 
+        '<span class="text-gray-400">$1</span>');
+  }, [text, status]);
+
+  return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
+}
+
 // XML Syntax Highlighter Component
 function XMLHighlighter({ text }: { text: string }) {
   const highlighted = useMemo(() => {
@@ -43,10 +83,12 @@ export default function CodeBlock({
   value,
   lang,
   className = '',
+  status = 'neutral',
 }: {
   value: unknown;
   lang?: 'json' | 'xml' | 'text';
   className?: string;
+  status?: 'success' | 'error' | 'neutral';
 }) {
   const [copied, setCopied] = useState(false);
   const [pretty, setPretty] = useState(true);
@@ -109,12 +151,12 @@ export default function CodeBlock({
       </div>
 
       {/* code */}
-      <pre className="max-h-[520px] overflow-auto p-3 text-[13px] leading-5">
-        <code>
+      <pre className="max-h-[520px] overflow-auto p-3 text-[13px] leading-5 whitespace-pre-wrap word-break-all">
+        <code className="whitespace-pre-wrap word-break-all block">
           {effectiveLang === 'xml' ? (
             <XMLHighlighter text={shown} />
           ) : effectiveLang === 'json' ? (
-            <span className="text-emerald-200">{shown}</span>
+            <JSONHighlighter text={shown} status={status} />
           ) : (
             <span className="text-base-200">{shown}</span>
           )}

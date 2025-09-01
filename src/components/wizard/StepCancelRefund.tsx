@@ -17,6 +17,8 @@ interface StepCancelRefundProps {
 export default function StepCancelRefund({ value, onChange, channelId, scenarios }: StepCancelRefundProps) {
   const hasCancel = scenarios.includes('CANCEL');
   const hasRefund = scenarios.includes('REFUND');
+  const hasPayment = scenarios.some(s => s.startsWith('PAYMENT')) || scenarios.includes('ALL');
+  const isCancelRefundOnly = (hasCancel || hasRefund) && !hasPayment && scenarios.length === 1;
   
   // Default to cancel if available
   const [openAccordion, setOpenAccordion] = useState<'cancel' | 'refund' | null>(
@@ -54,10 +56,20 @@ export default function StepCancelRefund({ value, onChange, channelId, scenarios
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-lg font-semibold">İptal / İade Seçimi</h2>
+        <h2 className={`text-lg font-semibold ${isCancelRefundOnly ? 'text-orange-400' : ''}`}>
+          İptal / İade Seçimi
+        </h2>
         <p className="text-sm text-neutral-400">
-          İşlem türünü seçin ve mevcut bir ödeme ile eşleştirin.
+          {isCancelRefundOnly 
+            ? 'Mevcut başarılı ödemelerden birini seçerek iptal/iade işlemi gerçekleştirin.'
+            : 'İşlem türünü seçin ve mevcut bir ödeme ile eşleştirin.'
+          }
         </p>
+        {isCancelRefundOnly && (
+          <div className="mt-2 p-3 bg-orange-950/30 border border-orange-800/30 rounded-lg text-sm text-orange-300">
+            Sadece iptal/iade modu: Yeni ödeme yapılmayacak, mevcut işlem üzerinde çalışılacak.
+          </div>
+        )}
       </header>
 
       <div className="space-y-3">

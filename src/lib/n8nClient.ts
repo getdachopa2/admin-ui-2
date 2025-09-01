@@ -10,6 +10,7 @@ const P_EVENTS        = String(import.meta.env.VITE_N8N_EVENTS           || '/we
 const P_CANCEL_REFUND_EVENTS = String(import.meta.env.VITE_N8N_CANCEL_REFUND_EVENTS || '/webhook/payment-test/cancel-refund/events');
 const P_TEST_CARDS    = String(import.meta.env.VITE_N8N_TEST_CARDS       || '/webhook/query/get-cards');
 const P_CANDIDATES    = String(import.meta.env.VITE_N8N_CANDIDATES       || '/webhook/payment-test/candidates');
+const P_DASHBOARD     = String(import.meta.env.VITE_N8N_DASHBOARD        || '/webhook/dashboard/metrics');
 const BASIC_RAW       = String(import.meta.env.VITE_N8N_BASIC || ''); // "user:pass"
 
 import type { RunData, StartPayload } from '@/types/n8n'; // DEĞİŞTİRİLDİ: StartPayload tipi artık n8n.ts'den gelecek
@@ -163,4 +164,12 @@ export async function listCandidates(
     { action: params.action, channelId: params.channelId, from: params.from, to: params.to, limit: params.limit },
     signal,
   );
+}
+
+export async function getDashboardMetrics(params: { today: string; yesterday: string }, signal?: AbortSignal) {
+  return req<any>(P_DASHBOARD, { 
+    method: 'POST', 
+    body: JSON.stringify(params), 
+    signal 
+  });
 }

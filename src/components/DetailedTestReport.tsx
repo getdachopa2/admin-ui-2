@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import CodeBlock from './CodeBlock';
 import { usePDFExport } from '../hooks/usePDFExport';
+import type { TestScenario } from '../pages/TestReportTable';
 
 interface TestStep {
   id: string;
@@ -49,63 +50,39 @@ function isN8NStep(step: StepData): step is N8NStep {
 function convertN8NStepToTestStep(step: N8NStep, index: number): TestStep {
   const id = `n8n-${index}`;
   const timestamp = step.time;
+  const status = (step.status === 'success' || step.status === 'error') ? step.status : 'pending';
   
-  // Step name ve request/response'dan type'ı ve diğer bilgileri çıkar
+  // Step name'den tip çıkarmaya çalış
   let type: 'token' | 'payment' | 'cancel' | 'refund' = 'payment';
   const name = step.name.toLowerCase();
-  
-  if (name.includes('token') || (step.request && step.request.cardNumber)) {
+  if (name.includes('token') || name.includes('kart token')) {
     type = 'token';
   } else if (name.includes('cancel') || name.includes('iptal')) {
     type = 'cancel';
   } else if (name.includes('refund') || name.includes('iade')) {
     type = 'refund';
-  } else if (name.includes('payment') || name.includes('ödeme') || (step.request && step.request.amount)) {
-    type = 'payment';
   }
-  
-  // Status mapping
-  let status: 'success' | 'error' | 'pending' = 'pending';
-  const stepStatus = step.status.toLowerCase();
-  
-  if (stepStatus === 'running' || stepStatus === 'completed' || stepStatus === 'success') {
-    status = 'success';
-  } else if (stepStatus === 'failed' || stepStatus === 'error') {
-    status = 'error';
-  }
-  
-  // Request/response'dan kart numarası ve payment ID çıkar
-  let cardNumber: string | undefined;
-  let paymentId: string | undefined;
+
+  // Kart numarası ve payment ID çıkarmaya çalış
+  let cardNumber = 'unknown';
+  let paymentId = 'unknown';
   
   if (step.request) {
-    // Token işlemi için kart numarası
-    if (step.request.cardNumber) {
-      cardNumber = step.request.cardNumber;
-    }
-    // Payment işlemi için token'dan kart numarası çıkarmaya çalış
-    if (step.request.token && step.response?.maskedCard) {
-      cardNumber = step.response.maskedCard.replace('*', '').replace(/\*/g, '');
-    }
+    cardNumber = step.request.cardNumber || step.request.ccno || cardNumber;
+    paymentId = step.request.paymentId || step.request.payment_id || paymentId;
   }
   
   if (step.response) {
-    // Payment ID'yi response'dan al
-    if (step.response.paymentId) {
-      paymentId = step.response.paymentId;
-    }
-    // Masked card varsa kullan
-    if (step.response.maskedCard && !cardNumber) {
-      cardNumber = step.response.maskedCard;
-    }
+    cardNumber = step.response.cardNumber || step.response.ccno || step.response.maskedCard || cardNumber;
+    paymentId = step.response.paymentId || step.response.payment_id || paymentId;
   }
-  
+
   return {
     id,
     type,
     timestamp,
-    status,
-    message: step.message || step.name,
+    status: status as 'success' | 'error' | 'pending',
+    message: step.message,
     request: step.request,
     response: step.response,
     cardNumber,
@@ -115,9 +92,217 @@ function convertN8NStepToTestStep(step: N8NStep, index: number): TestStep {
 
 export default function DetailedTestReport({ steps, testSummary }: DetailedTestReportProps) {
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const { exportToPDF, isExporting } = usePDFExport();
+
+  // Mock test scenarios data for PDF
+  const mockScenarios: TestScenario[] = [
+    {
+      id: '1',
+      name: 'Token Alma',
+      endpoint: '/api/auth/token',
+      status: 'success',
+      duration: 245,
+      details: {
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        hash: 'a7b9c2d4e5f6g7h8i9j0k1l2m3n4o5p6'
+      },
+      timestamp: '21:43:40',
+      request: {
+        method: 'POST',
+        url: 'https://api.example.com/auth/token',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'KanalKontrolBot/1.0'
+        },
+        body: {
+          username: 'test_user',
+          password: '***',
+          grant_type: 'password'
+        }
+      },
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: {
+          access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          token_type: 'bearer',
+          expires_in: 3600,
+          hash: 'a7b9c2d4e5f6g7h8i9j0k1l2m3n4o5p6'
+        }
+      }
+    },
+    {
+      id: '2', 
+      name: 'Ödeme İşlemi',
+      endpoint: '/api/payment/process',
+      status: 'success',
+      duration: 1320,
+      details: {
+        paymentId: '898328785',
+        orderId: '000000000000000387354296',
+        amount: 10.00
+      },
+      timestamp: '21:43:42',
+      request: {
+        method: 'POST',
+        url: 'https://api.example.com/payment/process',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          'X-Request-ID': 'req_387354296'
+        },
+        body: {
+          cardNumber: '4*** **** **** 1234',
+          expiryMonth: '12',
+          expiryYear: '2025',
+          cvv: '***',
+          amount: 10.00,
+          currency: 'TRY',
+          orderId: '000000000000000387354296'
+        }
+      },
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Transaction-ID': 'txn_898328785'
+        },
+        body: {
+          paymentId: '898328785',
+          status: 'approved',
+          authCode: 'A12345',
+          amount: 10.00,
+          currency: 'TRY',
+          orderId: '000000000000000387354296',
+          transactionDate: '2025-09-01T21:43:42Z'
+        }
+      }
+    },
+    {
+      id: '3',
+      name: 'İptal İşlemi', 
+      endpoint: '/api/payment/cancel',
+      status: 'success',
+      duration: 890,
+      details: {
+        paymentId: '898328784',
+        orderId: '000000000000000387354295'
+      },
+      timestamp: '21:43:45',
+      request: {
+        method: 'POST',
+        url: 'https://api.example.com/payment/cancel',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          'X-Request-ID': 'req_387354295'
+        },
+        body: {
+          paymentId: '898328784',
+          orderId: '000000000000000387354295',
+          reason: 'customer_request'
+        }
+      },
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Transaction-ID': 'txn_898328784_cancel'
+        },
+        body: {
+          cancelId: 'cnl_898328784',
+          status: 'cancelled',
+          originalPaymentId: '898328784',
+          orderId: '000000000000000387354295',
+          cancelDate: '2025-09-01T21:43:45Z'
+        }
+      }
+    },
+    {
+      id: '4',
+      name: 'Durum Sorgulama',
+      endpoint: '/api/payment/status',
+      status: 'failed',
+      duration: 0,
+      details: {
+        errorCode: 'TIMEOUT',
+        errorMessage: 'Connection timeout after 30 seconds'
+      },
+      timestamp: '21:43:48',
+      request: {
+        method: 'GET',
+        url: 'https://api.example.com/payment/status/898328783',
+        headers: {
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          'X-Request-ID': 'req_387354294'
+        }
+      },
+      response: {
+        status: 408,
+        statusText: 'Request Timeout',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: {
+          error: 'TIMEOUT',
+          message: 'Connection timeout after 30 seconds',
+          timestamp: '2025-09-01T21:43:48Z'
+        }
+      }
+    },
+    {
+      id: '5',
+      name: 'İade İşlemi',
+      endpoint: '/api/payment/refund', 
+      status: 'pending',
+      duration: 0,
+      details: {
+        paymentId: '898328783',
+        orderId: '000000000000000387354294',
+        amount: 10.00
+      },
+      timestamp: '21:43:50',
+      request: {
+        method: 'POST',
+        url: 'https://api.example.com/payment/refund',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          'X-Request-ID': 'req_387354294'
+        },
+        body: {
+          paymentId: '898328783',
+          orderId: '000000000000000387354294',
+          amount: 10.00,
+          reason: 'customer_request'
+        }
+      },
+      response: {
+        status: 202,
+        statusText: 'Accepted',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Transaction-ID': 'txn_898328783_refund'
+        },
+        body: {
+          refundId: 'ref_898328783',
+          status: 'pending',
+          originalPaymentId: '898328783',
+          orderId: '000000000000000387354294',
+          amount: 10.00,
+          estimatedProcessingTime: '1-3 business days',
+          refundDate: '2025-09-01T21:43:50Z'
+        }
+      }
+    }
+  ];
 
   const handleExportPDF = async () => {
     try {
@@ -125,13 +310,28 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
       console.log('Test summary:', testSummary);
       console.log('Normalized steps:', normalizedSteps.length, 'adet');
       
-      await exportToPDF('detailed-test-report', {
-        title: 'Kanal Kontrol Bot - Test Raporu',
-        filename: 'kanal-kontrol-test-raporu',
-        includeTimestamp: true,
-        testSummary,
-        testSteps: normalizedSteps
-      });
+      // Eğer test adımları varsa, sadece bunları kullan
+      if (normalizedSteps && normalizedSteps.length > 0) {
+        console.log('Gerçek test adımları kullanılıyor:', normalizedSteps);
+        await exportToPDF('detailed-test-report', {
+          title: 'Kanal Kontrol Bot - Test Raporu',
+          filename: 'kanal-kontrol-test-raporu',
+          includeTimestamp: true,
+          testSummary,
+          testSteps: normalizedSteps,
+          // scenarios: [] // Mock senaryoları kullanma
+        });
+      } else {
+        // Eğer gerçek test adımları yoksa, mock senaryoları kullan
+        console.log('Mock test senaryoları kullanılıyor:', mockScenarios);
+        await exportToPDF('detailed-test-report', {
+          title: 'Kanal Kontrol Bot - Test Raporu',
+          filename: 'kanal-kontrol-test-raporu',
+          includeTimestamp: true,
+          testSummary,
+          scenarios: mockScenarios
+        });
+      }
       
       console.log('PDF export başarılı!');
     } catch (error) {
@@ -188,44 +388,17 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
     return acc;
   }, [] as TestStep[]);
 
-  // Group steps first by type, then by card/payment identifier
+  // Group steps only by type, remove card/payment sub-grouping
   const groupedSteps = mergedSteps.reduce((acc, step) => {
     const typeKey = step.type;
     
     if (!acc[typeKey]) {
-      acc[typeKey] = {};
+      acc[typeKey] = [];
     }
     
-    let identifier: string;
-    if (step.type === 'token' || step.type === 'payment') {
-      // Kart numarası varsa onu kullan, yoksa request/response'dan çıkarmaya çalış
-      if (step.cardNumber && step.cardNumber !== 'unknown') {
-        identifier = step.cardNumber;
-      } else if (step.request?.cardNumber) {
-        identifier = step.request.cardNumber;
-      } else if (step.response?.maskedCard) {
-        identifier = step.response.maskedCard;
-      } else {
-        identifier = `Card-${step.id}`;
-      }
-    } else {
-      // Cancel/refund için payment ID kullan
-      if (step.paymentId && step.paymentId !== 'unknown') {
-        identifier = step.paymentId;
-      } else if (step.request?.paymentId) {
-        identifier = step.request.paymentId;
-      } else {
-        identifier = `Payment-${step.id}`;
-      }
-    }
-    
-    if (!acc[typeKey][identifier]) {
-      acc[typeKey][identifier] = [];
-    }
-    
-    acc[typeKey][identifier].push(step);
+    acc[typeKey].push(step);
     return acc;
-  }, {} as Record<string, Record<string, TestStep[]>>);
+  }, {} as Record<string, TestStep[]>);
 
   const toggleType = (type: string) => {
     const newExpanded = new Set(expandedTypes);
@@ -237,16 +410,6 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
     setExpandedTypes(newExpanded);
   };
 
-  const toggleCard = (cardKey: string) => {
-    const newExpanded = new Set(expandedCards);
-    if (newExpanded.has(cardKey)) {
-      newExpanded.delete(cardKey);
-    } else {
-      newExpanded.add(cardKey);
-    }
-    setExpandedCards(newExpanded);
-  };
-
   const toggleStep = (stepId: string) => {
     const newExpanded = new Set(expandedSteps);
     if (newExpanded.has(stepId)) {
@@ -255,14 +418,6 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
       newExpanded.add(stepId);
     }
     setExpandedSteps(newExpanded);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return 'text-emerald-400 bg-emerald-500/10';
-      case 'error': return 'text-red-400 bg-red-500/10';
-      default: return 'text-amber-400 bg-amber-500/10';
-    }
   };
 
   const getTypeLabel = (type: string) => {
@@ -276,9 +431,24 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
   };
 
   const formatIdentifier = (type: string, identifier: string) => {
-    if (type === 'token' || type === 'payment') {
+    // Otomatik oluşturulan identifier'ları temizle
+    if (identifier.startsWith('Card-') || identifier.startsWith('Payment-')) {
+      const parts = identifier.split('-');
+      if (parts.length >= 3) {
+        // "Card-n8n-1" -> "Kart #1", "Payment-n8n-6" -> "Payment #6"
+        const number = parts[parts.length - 1];
+        return type === 'token' || type === 'payment' ? `Kart #${number}` : `Payment #${number}`;
+      }
+    }
+    
+    // SADECE 16 haneli kart numaraları için maskeleme yap
+    // Diğer tüm bilgiler (orderID, paymentID, transactionID vb.) tam gösterilsin
+    if (/^\d{16}$/.test(identifier)) {
+      // 16 haneli sayısal değer ise kart numarası kabul et ve maskele
       return identifier.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1****$4');
     }
+    
+    // Diğer tüm önemli bilgileri (orderID, paymentID, transactionID vb.) olduğu gibi göster
     return identifier;
   };
 
@@ -317,101 +487,260 @@ export default function DetailedTestReport({ steps, testSummary }: DetailedTestR
 
       {/* Test Steps */}
       <div className="space-y-2">
-      {Object.entries(groupedSteps).map(([type, identifierGroups]) => (
-        <div key={type} className="border border-neutral-700 rounded-lg overflow-hidden">
-          {/* Type Header (Token Alma, Ödeme, etc.) */}
-          <button
-            onClick={() => toggleType(type)}
-            className="w-full px-4 py-3 text-left flex items-center justify-between bg-neutral-800 hover:bg-neutral-750 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-neutral-200">{getTypeLabel(type)}</span>
-              <span className="text-xs text-neutral-400 bg-neutral-700 px-2 py-1 rounded">
-                {Object.values(identifierGroups).reduce((sum, steps) => sum + steps.length, 0)} adım
+        {Object.entries(groupedSteps).map(([type, steps]) => (
+          <div key={type} className="border border-neutral-700 rounded-lg overflow-hidden">
+            {/* Type Header (Token Alma, Ödeme, etc.) */}
+            <button
+              onClick={() => toggleType(type)}
+              className="w-full px-4 py-3 text-left flex items-center justify-between bg-neutral-800 hover:bg-neutral-750 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-base font-semibold text-neutral-100">
+                  {getTypeLabel(type)}
+                </span>
+                <span className="text-xs text-neutral-300 bg-neutral-700 px-2 py-1 rounded">
+                  {steps.length} adım
+                </span>
+                {/* Genel başarı/hata durumu */}
+                <div className="flex gap-1">
+                  {steps.some(s => s.status === 'success') && (
+                    <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded">Başarılı</span>
+                  )}
+                  {steps.some(s => s.status === 'error') && (
+                    <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">Hatalı</span>
+                  )}
+                </div>
+              </div>
+              <span className="text-neutral-400 text-sm">
+                {expandedTypes.has(type) ? '−' : '+'}
               </span>
-            </div>
-            <span className="text-neutral-400 text-sm">
-              {expandedTypes.has(type) ? '−' : '+'}
-            </span>
-          </button>
+            </button>
 
-          {/* Type Content - Card/Payment Groups */}
-          {expandedTypes.has(type) && (
-            <div className="bg-neutral-900/50">
-              {Object.entries(identifierGroups).map(([identifier, steps]) => {
-                const cardKey = `${type}-${identifier}`;
-                return (
-                  <div key={cardKey} className="border-t border-neutral-700">
-                    {/* Card/Payment Header */}
-                    <button
-                      onClick={() => toggleCard(cardKey)}
-                      className="w-full px-5 py-3 text-left flex items-center justify-between hover:bg-neutral-800/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-neutral-300 font-mono">
-                          {type === 'token' || type === 'payment' ? 'Kart' : 'Payment ID'}: {formatIdentifier(type, identifier)}
-                        </span>
-                        <span className="text-xs text-neutral-500 bg-neutral-700 px-2 py-1 rounded">{steps.length} işlem</span>
-                      </div>
-                      <span className="text-neutral-500 text-sm">
-                        {expandedCards.has(cardKey) ? '−' : '+'}
-                      </span>
-                    </button>
+            {/* Type Content - Direct Steps */}
+            {expandedTypes.has(type) && (
+              <div className="bg-neutral-900/50">
+                {steps.map((step) => {
+                  // Kart numarası/Payment ID'sini çıkar (gösterim için)
+                  let identifier = '';
+                  if (step.type === 'token' || step.type === 'payment') {
+                    // Önce message içinden maskelenmiş kart numarasını kontrol et
+                    if (step.message) {
+                      const cardMatch = step.message.match(/Kart:\s*(\d{6}\*{4}\d{4})/);
+                      if (cardMatch) {
+                        identifier = cardMatch[1]; // Zaten maskelenmiş halde
+                      }
+                    }
+                    
+                    // Eğer message'dan bulamadıysak diğer yerlere bak
+                    if (!identifier) {
+                      if (step.cardNumber && step.cardNumber !== 'unknown') {
+                        identifier = formatIdentifier(step.type, step.cardNumber);
+                      } else if (step.request?.cardNumber) {
+                        identifier = formatIdentifier(step.type, step.request.cardNumber);
+                      } else if (step.request?.ccno) {
+                        identifier = formatIdentifier(step.type, step.request.ccno);
+                      } else if (step.response?.maskedCard) {
+                        identifier = step.response.maskedCard;
+                      }
+                    }
+                  } else {
+                    if (step.paymentId && step.paymentId !== 'unknown') {
+                      identifier = step.paymentId;
+                    } else if (step.request?.paymentId) {
+                      identifier = step.request.paymentId;
+                    }
+                  }
 
-                    {/* Card/Payment Steps */}
-                    {expandedCards.has(cardKey) && (
-                      <div className="bg-neutral-900/70">
-                        {steps.map((step) => (
-                          <div key={step.id} className="border-t border-neutral-700">
-                            {/* Step Header */}
-                            <button
-                              onClick={() => toggleStep(step.id)}
-                              className="w-full px-6 py-3 text-left flex items-center justify-between hover:bg-neutral-800/30 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className={`w-2 h-2 rounded-full ${getStatusColor(step.status).split(' ')[1]}`} />
-                                <div className="flex flex-col">
-                                  <span className="text-xs text-neutral-300">
-                                    {new Date(step.timestamp).toLocaleString('tr-TR')}
-                                  </span>
-                                  {step.message && (
-                                    <span className="text-xs text-neutral-400">{step.message}</span>
-                                  )}
-                                </div>
-                              </div>
-                              <span className="text-neutral-500 text-sm">
-                                {expandedSteps.has(step.id) ? '−' : '+'}
-                              </span>
-                            </button>
-
-                            {/* Step Details */}
-                            {expandedSteps.has(step.id) && (
-                              <div className="px-6 pb-4 space-y-4 bg-neutral-950/50">
-                                {step.request && (
-                                  <div>
-                                    <h5 className="text-xs font-medium text-neutral-400 mb-2">Request:</h5>
-                                    <CodeBlock value={step.request} lang="json" />
-                                  </div>
-                                )}
-                                {step.response && (
-                                  <div>
-                                    <h5 className="text-xs font-medium text-neutral-400 mb-2">Response:</h5>
-                                    <CodeBlock value={step.response} lang="json" />
-                                  </div>
-                                )}
-                              </div>
+                  return (
+                    <div key={step.id} className="border-t border-neutral-700">
+                      {/* Step Header */}
+                      <button
+                        onClick={() => toggleStep(step.id)}
+                        className={`w-full px-6 py-3 text-left flex items-center justify-between hover:bg-neutral-800/30 transition-colors border-l-4 ${
+                          step.status === 'success' ? 'border-l-emerald-500' : 
+                          step.status === 'error' ? 'border-l-red-500' : 
+                          'border-l-amber-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-3 h-3 rounded-full ${
+                            step.status === 'success' ? 'bg-emerald-500' : 
+                            step.status === 'error' ? 'bg-red-500' : 
+                            'bg-amber-500 animate-pulse'
+                          }`} />
+                          <div className="flex flex-col">
+                            <span className={`text-sm font-medium ${
+                              step.status === 'success' ? 'text-emerald-300' : 
+                              step.status === 'error' ? 'text-red-300' : 'text-amber-300'
+                            }`}>
+                              {new Date(step.timestamp).toLocaleString('tr-TR')}
+                              {identifier && (
+                                <span className="ml-2 text-xs text-neutral-300 font-mono break-all">
+                                  ({step.type === 'token' || step.type === 'payment' ? 'Kart' : 'Payment'}: <span className="bg-neutral-800 px-1 rounded">{identifier}</span>)
+                                </span>
+                              )}
+                            </span>
+                            {step.message && (
+                              <span className="text-xs text-neutral-400">{step.message}</span>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      ))}
+                        </div>
+                        <span className="text-neutral-500 text-sm">
+                          {expandedSteps.has(step.id) ? '−' : '+'}
+                        </span>
+                      </button>
+
+                      {/* Step Details */}
+                      {expandedSteps.has(step.id) && (
+                        <div className="px-6 pb-4 space-y-4 bg-neutral-950/50">
+                          {/* Önemli Bilgiler - Çerçevesiz */}
+                          {(() => {
+                            const importantInfo: Record<string, string> = {};
+                            
+                            console.log('Step type:', step.type, 'Step:', step);
+                            
+                            // Token işlemleri için özel bilgiler
+                            if (step.type === 'token') {
+                              console.log('Token işlemi algılandı');
+                              // Request'ten token bilgisi
+                              if (step.request && typeof step.request === 'object') {
+                                const req = step.request as any;
+                                if (req.orderId) importantInfo['Order ID'] = req.orderId;
+                                if (req.orderNumber) importantInfo['Order Number'] = req.orderNumber;
+                              }
+                              
+                              // Response'tan token değeri ve description
+                              if (step.response && typeof step.response === 'object') {
+                                const res = step.response as any;
+                                if (res.token) importantInfo['Token'] = res.token;
+                                if (res.responseDescription) importantInfo['Response Description'] = res.responseDescription;
+                                if (res.orderId && !importantInfo['Order ID']) importantInfo['Order ID'] = res.orderId;
+                                if (res.orderNumber && !importantInfo['Order Number']) importantInfo['Order Number'] = res.orderNumber;
+                              }
+                            }
+                            // Cancel/Refund işlemleri için özel bilgiler
+                            else if (step.type === 'cancel' || step.type === 'refund') {
+                              console.log('Cancel/Refund işlemi algılandı');
+                              // Request'ten payment ID
+                              if (step.request && typeof step.request === 'object') {
+                                const req = step.request as any;
+                                if (req.paymentId) importantInfo['Payment ID'] = req.paymentId;
+                                if (req.payment_id) importantInfo['Payment ID'] = req.payment_id;
+                                if (req.orderId) importantInfo['Order ID'] = req.orderId;
+                                if (req.orderNumber) importantInfo['Order Number'] = req.orderNumber;
+                              }
+                              
+                              // Response'tan result code ve description
+                              if (step.response && typeof step.response === 'object') {
+                                const res = step.response as any;
+                                if (res.paymentId && !importantInfo['Payment ID']) importantInfo['Payment ID'] = res.paymentId;
+                                if (res.payment_id && !importantInfo['Payment ID']) importantInfo['Payment ID'] = res.payment_id;
+                                if (res.resultCode) importantInfo['Result Code'] = res.resultCode;
+                                if (res.resultDescription) importantInfo['Result Description'] = res.resultDescription;
+                                if (res.description) importantInfo['Description'] = res.description;
+                                
+                                // Operation result içindeki bilgileri çıkar
+                                if (res.operationResult && typeof res.operationResult === 'object') {
+                                  const opResult = res.operationResult;
+                                  if (opResult.resultCode && !importantInfo['Result Code']) importantInfo['Result Code'] = opResult.resultCode;
+                                  if (opResult.resultDescription && !importantInfo['Result Description']) importantInfo['Result Description'] = opResult.resultDescription;
+                                }
+                              }
+                            }
+                            // Payment işlemleri için genel bilgiler
+                            else {
+                              console.log('Payment işlemi algılandı');
+                              // Request'ten önemli bilgileri çıkar
+                              if (step.request && typeof step.request === 'object') {
+                                const req = step.request as any;
+                                if (req.orderId) importantInfo['Order ID'] = req.orderId;
+                                if (req.orderNumber) importantInfo['Order Number'] = req.orderNumber;
+                                if (req.paymentId) importantInfo['Payment ID'] = req.paymentId;
+                                if (req.payment_id) importantInfo['Payment ID'] = req.payment_id;
+                                if (req.transactionId) importantInfo['Transaction ID'] = req.transactionId;
+                                if (req.transaction_id) importantInfo['Transaction ID'] = req.transaction_id;
+                                if (req.merchantOrderId) importantInfo['Merchant Order ID'] = req.merchantOrderId;
+                                if (req.referenceNumber) importantInfo['Reference Number'] = req.referenceNumber;
+                              }
+                              
+                              // Response'tan önemli bilgileri çıkar
+                              if (step.response && typeof step.response === 'object') {
+                                const res = step.response as any;
+                                if (res.orderId && !importantInfo['Order ID']) importantInfo['Order ID'] = res.orderId;
+                                if (res.orderNumber && !importantInfo['Order Number']) importantInfo['Order Number'] = res.orderNumber;
+                                if (res.paymentId && !importantInfo['Payment ID']) importantInfo['Payment ID'] = res.paymentId;
+                                if (res.payment_id && !importantInfo['Payment ID']) importantInfo['Payment ID'] = res.payment_id;
+                                if (res.transactionId && !importantInfo['Transaction ID']) importantInfo['Transaction ID'] = res.transactionId;
+                                if (res.transaction_id && !importantInfo['Transaction ID']) importantInfo['Transaction ID'] = res.transaction_id;
+                                if (res.merchantOrderId && !importantInfo['Merchant Order ID']) importantInfo['Merchant Order ID'] = res.merchantOrderId;
+                                if (res.referenceNumber && !importantInfo['Reference Number']) importantInfo['Reference Number'] = res.referenceNumber;
+                                if (res.resultCode) importantInfo['Result Code'] = res.resultCode;
+                                if (res.description) importantInfo['Description'] = res.description;
+                                
+                                // Operation result içindeki bilgileri çıkar
+                                if (res.operationResult && typeof res.operationResult === 'object') {
+                                  const opResult = res.operationResult;
+                                  if (opResult.resultCode) importantInfo['ResultCode'] = opResult.resultCode;
+                                  if (opResult.resultDescription) importantInfo['ResultDescription'] = opResult.resultDescription;
+                                }
+                              }
+                            }
+                            
+                            console.log('Important info:', importantInfo);
+                            
+                            if (Object.keys(importantInfo).length > 0) {
+                              return (
+                                <div className="mb-4 space-y-1 text-xs">
+                                  {Object.entries(importantInfo).map(([key, value]) => (
+                                    <div key={key} className="flex flex-col sm:flex-row sm:flex-wrap gap-1">
+                                      <span className="text-white font-medium min-w-[120px] flex-shrink-0">{key}:</span>
+                                      <span className={`font-mono px-1 rounded word-break-all flex-1 min-w-0 whitespace-pre-wrap ${
+                                        step.status === 'success' ? 'text-emerald-400' : 
+                                        step.status === 'error' ? 'text-red-400' : 'text-neutral-300'
+                                      }`}>{value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                          
+                          {step.request && (
+                            <div>
+                              <h5 className={`text-xs font-medium mb-2 ${
+                                step.status === 'success' ? 'text-emerald-400' : 
+                                step.status === 'error' ? 'text-red-400' : 'text-neutral-400'
+                              }`}>
+                                Request {step.status === 'success' ? '(Başarılı)' : step.status === 'error' ? '(Hatalı)' : '(Bekliyor)'}
+                              </h5>
+                              <div className="rounded-lg border border-neutral-700 bg-neutral-900">
+                                <CodeBlock value={step.request} lang="json" status={step.status === 'pending' ? 'neutral' : step.status} />
+                              </div>
+                            </div>
+                          )}
+                          {step.response && (
+                            <div>
+                              <h5 className={`text-xs font-medium mb-2 ${
+                                step.status === 'success' ? 'text-emerald-400' : 
+                                step.status === 'error' ? 'text-red-400' : 'text-neutral-400'
+                              }`}>
+                                Response {step.status === 'success' ? '(Başarılı)' : step.status === 'error' ? '(Hatalı)' : '(Bekliyor)'}
+                              </h5>
+                              <div className="rounded-lg border border-neutral-700 bg-neutral-900">
+                                <CodeBlock value={step.response} lang="json" status={step.status === 'pending' ? 'neutral' : step.status} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

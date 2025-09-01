@@ -228,11 +228,11 @@ const body = (rows as AnyRow[]).map(r => [
 
 
 function panText(r: AnyRow) {
-  if (r.ccno) return String(r.ccno); // açık
+  if (r.ccno) return maskPan(String(r.ccno)); // maskele
   if (r.ccno_masked) return String(r.ccno_masked);
   if (r.ccno_last4) return `•••• ${String(r.ccno_last4)}`;
   // en son eldeki ccno üstünden maskele
-  return;
+  return "••••";
 }
 
 // SKT birleştir – API expire veriyorsa onu kullan

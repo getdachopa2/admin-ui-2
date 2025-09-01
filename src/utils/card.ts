@@ -13,5 +13,10 @@ export function luhnOk(num: string) {
 
 export function maskPan(pan: string) {
   const d = (pan || "").replace(/\s+/g, "");
-  return d.length >= 4 ? `•••• ${d.slice(-4)}` : "••••";
+  if (d.length < 10) return "••••";
+  
+  // İlk 6 ve son 4 rakamı göster, ortası ****
+  const first6 = d.slice(0, 6);
+  const last4 = d.slice(-4);
+  return `${first6}****${last4}`;
 }

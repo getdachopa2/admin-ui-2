@@ -10,6 +10,7 @@ export default function Shell() {
           <Nav to="/">Dashboard</Nav>
           <Nav to="/kanal-kontrol-botu">Kanal Kontrol Botu</Nav>
           <Nav to="/kart-durum-raporu">Kart Durum Raporu</Nav>
+          <Nav to="/parametre-durum-kontrol">Parametre Durum Kontrol</Nav>
         </nav>
       </aside>
       <main className="p-6">

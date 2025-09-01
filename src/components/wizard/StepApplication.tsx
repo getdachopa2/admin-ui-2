@@ -164,10 +164,7 @@ export default function StepApplication({ value, onChange }: StepApplicationProp
       </div>
 
       {/* Info */}
-      <div className="rounded-lg border border-blue-700/40 bg-blue-700/10 p-2 text-xs text-blue-200">
-        <p className="font-medium mb-1">💡 İpucu:</p>
-        <p>Transaction ID ve DateTime boş bırakılırsa otomatik olarak üretilir.</p>
-      </div>
+  
     </div>
   );
 }

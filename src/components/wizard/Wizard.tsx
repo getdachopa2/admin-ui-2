@@ -51,11 +51,25 @@ export default function Wizard({ onComplete, onCancel }: WizardProps) {
     }
   });
 
-  // Görünürlük kuralları ileride senaryoya göre şekillenecek
+  // Görünürlük kuralları senaryoya göre
   const visibleSteps = useMemo(() => {
-    // Şimdilik tüm başlıkları gösterelim; içerikleri senaryoya göre açıp kapatacağız.
+    const selectedScenarios = data.scenarios || [];
+    
+    // İptal veya iade sadece seçildiyse (ALL olmadan)
+    const isOnlyCancel = selectedScenarios.includes('CANCEL') && !selectedScenarios.includes('ALL') && !selectedScenarios.some(s => s.startsWith('PAYMENT'));
+    const isOnlyRefund = selectedScenarios.includes('REFUND') && !selectedScenarios.includes('ALL') && !selectedScenarios.some(s => s.startsWith('PAYMENT'));
+    const isCancelRefundOnly = (isOnlyCancel || isOnlyRefund) && selectedScenarios.length === 1;
+    
+    if (isCancelRefundOnly) {
+      // Sadece iptal/iade seçildiyse kart ve ödeme adımlarını gizle
+      return STEPS.filter(step => 
+        step.key !== 'cards' && step.key !== 'payment'
+      );
+    }
+    
+    // Diğer durumlarda tüm adımları göster
     return STEPS;
-  }, []);
+  }, [data.scenarios]);
 
   const current = visibleSteps[stepIndex]?.key;
 
@@ -75,8 +89,19 @@ export default function Wizard({ onComplete, onCancel }: WizardProps) {
     }
   };
 
+  const goToStep = (targetIndex: number) => {
+    if (targetIndex >= 0 && targetIndex < visibleSteps.length) {
+      setStepIndex(targetIndex);
+    }
+  };
+
   // Validation - İleri butonu aktif olabilir mi?
   const canNext = useMemo(() => {
+    const selectedScenarios = data.scenarios || [];
+    const isOnlyCancel = selectedScenarios.includes('CANCEL') && !selectedScenarios.includes('ALL') && !selectedScenarios.some(s => s.startsWith('PAYMENT'));
+    const isOnlyRefund = selectedScenarios.includes('REFUND') && !selectedScenarios.includes('ALL') && !selectedScenarios.some(s => s.startsWith('PAYMENT'));
+    const isCancelRefundOnly = (isOnlyCancel || isOnlyRefund) && selectedScenarios.length === 1;
+
     switch (current) {
       case 'scenario':
         return data.scenarios && data.scenarios.length > 0;
@@ -85,11 +110,19 @@ export default function Wizard({ onComplete, onCancel }: WizardProps) {
       case 'app':
         return data.application?.applicationName && data.application?.applicationPassword;
       case 'cards':
+        // İptal/iade only durumunda bu adım gizli, validation gerekmiyor
+        if (isCancelRefundOnly) return true;
         return data.cardSelectionMode === 'automatic' || 
                (data.cardSelectionMode === 'manual' && data.manualCards && data.manualCards.length > 0);
       case 'cr':
-        return true; // Cancel/Refund is optional
+        // İptal/iade only durumunda candidate seçilmesi zorunlu
+        if (isCancelRefundOnly) {
+          return data.cancelRefund?.selectedCandidate?.paymentId;
+        }
+        return true; // Diğer durumlarda opsiyonel
       case 'payment':
+        // İptal/iade only durumunda bu adım gizli, validation gerekmiyor
+        if (isCancelRefundOnly) return true;
         return data.payment?.msisdn && data.payment?.amount;
       case 'summary':
         return true;
@@ -104,14 +137,21 @@ export default function Wizard({ onComplete, onCancel }: WizardProps) {
       <div className="flex items-center gap-2 flex-wrap">
         {visibleSteps.map((s, i) => {
           const active = i === stepIndex;
+          const completed = i < stepIndex;
           return (
-            <div
+            <button
               key={s.key}
-              className={`px-2 py-1 rounded-lg text-xs border 
-                ${active ? 'border-primary text-primary bg-primary/10' : 'border-base-800 text-base-400'}`}
+              onClick={() => goToStep(i)}
+              className={`px-2 py-1 rounded-lg text-xs border transition-colors hover:opacity-80
+                ${active 
+                  ? 'border-primary text-primary bg-primary/10' 
+                  : completed
+                    ? 'border-green-600 text-green-400 bg-green-600/10 hover:bg-green-600/20'
+                    : 'border-base-800 text-base-400 hover:border-base-600 hover:text-base-300'
+                }`}
             >
               {i + 1}. {s.title}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -242,6 +282,7 @@ export default function Wizard({ onComplete, onCancel }: WizardProps) {
               'İptal/İade Payment ID': data.cancelRefund?.selectedCandidate?.paymentId || 'Yok',
             }}
             tableData={[]}
+            showTable={false}
             flags={data.payment?.options ? {
               'includeMsisdnInOrderID': data.payment.options.includeMsisdnInOrderID,
               'checkCBBLForMsisdn': data.payment.options.checkCBBLForMsisdn,

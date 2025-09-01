@@ -6,8 +6,9 @@ import './index.css';
 import Shell from '@/shell/Shell';
 import Dashboard from '@/pages/Dashboard';
 import KanalKontrolBotu from '@/pages/KanalKontrolBotu';
-import PaymentSim from '@/pages/PaymentSim';
+import TestResults from '@/pages/TestResults';
 import KartDurumRaporu from '@/pages/KartDurumRaporu';
+import ParametreDurumKontrol from '@/pages/ParametreDurumKontrol';
 
 
 const router = createBrowserRouter([
@@ -17,8 +18,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'kanal-kontrol-botu', element: <KanalKontrolBotu /> },
-      // { path: 'payment-sim', element: <PaymentSim /> }, 
-        { path: 'kart-durum-raporu', element: <KartDurumRaporu /> },
+      { path: 'test-results', element: <TestResults /> },
+      { path: 'kart-durum-raporu', element: <KartDurumRaporu /> },
+      { path: 'parametre-durum-kontrol', element: <ParametreDurumKontrol /> },
       { path: 'kanal-kontrol', element: <Navigate to="/kanal-kontrol-botu" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
