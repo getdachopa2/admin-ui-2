@@ -11,6 +11,11 @@ export default function Shell() {
           <Nav to="/kanal-kontrol-botu">Kanal Kontrol Botu</Nav>
           <Nav to="/kart-durum-raporu">Kart Durum Raporu</Nav>
           <Nav to="/parametre-durum-kontrol">Parametre Durum Kontrol</Nav>
+          
+          {/* Divider */}
+          <div className="my-2 border-t border-base-800"></div>
+          
+          <Nav to="/changelog">📋 Changelog</Nav>
         </nav>
       </aside>
       <main className="p-6">

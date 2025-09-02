@@ -22,15 +22,16 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
-// Dashboard metrics endpoint - Sadece metrikler
+// Dashboard metrics endpoint
 app.post('/api/dashboard/metrics', async (req, res) => {
   try {
     const { today, yesterday } = req.body;
+    console.log('Dashboard API called with:', { today, yesterday });
 
-    // Bugünkü ve dünkü metrikler
+    // Son 24 saat ve önceki 24 saat metrikler
     const metricsQuery = `
       SELECT 
-        'today' as period,
+        'recent' as period,
         COUNT(*) as total_runs,
         COUNT(CASE WHEN success_bool = true THEN 1 END) as successful_payments,
         COUNT(CASE WHEN cancel_date IS NOT NULL OR refund_date IS NOT NULL THEN 1 END) as cancellations,
@@ -38,12 +39,12 @@ app.post('/api/dashboard/metrics', async (req, res) => {
           (COUNT(CASE WHEN success_bool = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0)), 0
         ) as success_rate
       FROM app.payment_log 
-      WHERE DATE(created_at) = $1
+      WHERE created_at >= NOW() - INTERVAL '24 hours'
 
       UNION ALL
 
       SELECT 
-        'yesterday' as period,
+        'previous' as period,
         COUNT(*) as total_runs,
         COUNT(CASE WHEN success_bool = true THEN 1 END) as successful_payments,
         COUNT(CASE WHEN cancel_date IS NOT NULL OR refund_date IS NOT NULL THEN 1 END) as cancellations,
@@ -51,86 +52,11 @@ app.post('/api/dashboard/metrics', async (req, res) => {
           (COUNT(CASE WHEN success_bool = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0)), 0
         ) as success_rate
       FROM app.payment_log 
-      WHERE DATE(created_at) = $2
+      WHERE created_at >= NOW() - INTERVAL '48 hours' 
+        AND created_at < NOW() - INTERVAL '24 hours'
     `;
 
-    const metricsResult = await pool.query(metricsQuery, [today, yesterday]);
-
-    // Metrikleri parse et
-    const todayStats = metricsResult.rows.find(row => row.period === 'today') || {};
-    const yesterdayStats = metricsResult.rows.find(row => row.period === 'yesterday') || {};
-
-    const response = {
-      success: true,
-      metrics: {
-        todayRuns: parseInt(todayStats.total_runs || 0),
-        successfulPayments: parseInt(todayStats.successful_payments || 0),
-        cancellations: parseInt(todayStats.cancellations || 0),
-        successRate: parseInt(todayStats.success_rate || 0),
-        yesterdayRuns: parseInt(yesterdayStats.total_runs || 0),
-        yesterdayPayments: parseInt(yesterdayStats.successful_payments || 0),
-        yesterdayCancellations: parseInt(yesterdayStats.cancellations || 0),
-        yesterdaySuccessRate: parseInt(yesterdayStats.success_rate || 0)
-      }
-    };
-
-    res.json(response);
-
-  } catch (error) {
-    console.error('Dashboard API Error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Database error',
-      message: error.message 
-    });
-  }
-});
-
-// Kanal kontrol metrikleri - KanalKontrolBotu için
-app.post('/api/kanal/metrics', async (req, res) => {
-  try {
-    // Kanal kontrol için basit metrikler
-    const simRunsQuery = `
-      SELECT 
-        COUNT(*) as total_sim_runs,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END) as successful_sim_runs,
-        COUNT(CASE WHEN status = 'error' THEN 1 END) as failed_sim_runs,
-        ROUND(AVG(EXTRACT(EPOCH FROM (end_time - start_time)) * 1000)) as avg_response_time
-      FROM app.sim_runs 
-      WHERE DATE(start_time) = CURRENT_DATE
-    `;
-
-    const simRunsResult = await pool.query(simRunsQuery);
-    const stats = simRunsResult.rows[0] || {};
-
-    const response = {
-      success: true,
-      metrics: {
-        totalRuns: parseInt(stats.total_sim_runs || 0),
-        successfulRuns: parseInt(stats.successful_sim_runs || 0),
-        failedRuns: parseInt(stats.failed_sim_runs || 0),
-        totalRequests: parseInt(stats.total_sim_runs || 0), // Sim runs = requests
-        avgResponseTime: parseInt(stats.avg_response_time || 0),
-        todayRuns: parseInt(stats.total_sim_runs || 0),
-        activeFlows: 0 // Şimdilik sabit
-      }
-    };
-
-    res.json(response);
-
-  } catch (error) {
-    console.error('Kanal Metrics API Error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Database error',
-      message: error.message 
-    });
-  }
-});
-
-// Son 5 ödeme
-app.get('/api/dashboard/recent-payments', async (req, res) => {
-  try {
+    // Son 24 saat içindeki son 5 ödeme
     const paymentsQuery = `
       SELECT 
         payment_id as id,
@@ -150,106 +76,82 @@ app.get('/api/dashboard/recent-payments', async (req, res) => {
         card_token,
         result_code
       FROM app.payment_log 
-      WHERE DATE(created_at) = CURRENT_DATE
+      WHERE created_at >= NOW() - INTERVAL '24 hours'
         AND cancel_date IS NULL 
         AND refund_date IS NULL
       ORDER BY created_at DESC 
       LIMIT 5
     `;
 
-    const result = await pool.query(paymentsQuery);
-
-    res.json({
-      success: true,
-      payments: result.rows
-    });
-
-  } catch (error) {
-    console.error('Recent Payments API Error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Database error',
-      message: error.message 
-    });
-  }
-});
-
-// Son 5 iptal
-app.get('/api/dashboard/recent-cancellations', async (req, res) => {
-  try {
+    // Son 24 saat içindeki son 5 iptal/iade
     const cancellationsQuery = `
       SELECT 
         payment_id as id,
         order_id,
         CONCAT(amount, ' TL') as amount,
-        'İptal' as type,
-        TO_CHAR(cancel_date, 'HH24:MI') as time,
+        CASE 
+          WHEN cancel_date IS NOT NULL THEN 'İptal' 
+          WHEN refund_date IS NOT NULL THEN 'İade'
+          ELSE 'Bilinmeyen'
+        END as type,
+        TO_CHAR(
+          COALESCE(cancel_date, refund_date, created_at), 
+          'HH24:MI'
+        ) as time,
         'Müşteri talebi' as reason,
         amount as raw_amount,
         success_bool,
         created_at,
         cancel_date,
-        issuer_bank_code,
-        card_token,
-        cancel_result_code
-      FROM app.payment_log 
-      WHERE DATE(created_at) = CURRENT_DATE
-        AND cancel_date IS NOT NULL
-      ORDER BY cancel_date DESC 
-      LIMIT 5
-    `;
-
-    const result = await pool.query(cancellationsQuery);
-
-    res.json({
-      success: true,
-      cancellations: result.rows
-    });
-
-  } catch (error) {
-    console.error('Recent Cancellations API Error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Database error',
-      message: error.message 
-    });
-  }
-});
-
-// Son 5 iade
-app.get('/api/dashboard/recent-refunds', async (req, res) => {
-  try {
-    const refundsQuery = `
-      SELECT 
-        payment_id as id,
-        order_id,
-        CONCAT(amount, ' TL') as amount,
-        'İade' as type,
-        TO_CHAR(refund_date, 'HH24:MI') as time,
-        'Müşteri talebi' as reason,
-        amount as raw_amount,
-        success_bool,
-        created_at,
         refund_date,
         issuer_bank_code,
         card_token,
+        cancel_result_code,
         refund_result_code
       FROM app.payment_log 
-      WHERE DATE(created_at) = CURRENT_DATE
-        AND refund_date IS NOT NULL
-      ORDER BY refund_date DESC 
+      WHERE created_at >= NOW() - INTERVAL '24 hours'
+        AND (cancel_date IS NOT NULL OR refund_date IS NOT NULL)
+      ORDER BY COALESCE(cancel_date, refund_date, created_at) DESC 
       LIMIT 5
     `;
 
-    const result = await pool.query(refundsQuery);
+    // Tüm query'leri çalıştır
+    const [metricsResult, paymentsResult, cancellationsResult] = await Promise.all([
+      pool.query(metricsQuery),
+      pool.query(paymentsQuery),
+      pool.query(cancellationsQuery)
+    ]);
 
-    res.json({
+    console.log('Query results:');
+    console.log('Metrics:', metricsResult.rows);
+    console.log('Payments:', paymentsResult.rows.length, 'items');
+    console.log('Cancellations:', cancellationsResult.rows.length, 'items');
+
+    // Metrikleri parse et
+    const recentStats = metricsResult.rows.find(row => row.period === 'recent') || {};
+    const previousStats = metricsResult.rows.find(row => row.period === 'previous') || {};
+
+    const response = {
       success: true,
-      refunds: result.rows
-    });
+      metrics: {
+        todayRuns: parseInt(recentStats.total_runs || 0),
+        successfulPayments: parseInt(recentStats.successful_payments || 0),
+        cancellations: parseInt(recentStats.cancellations || 0),
+        successRate: parseInt(recentStats.success_rate || 0),
+        yesterdayRuns: parseInt(previousStats.total_runs || 0),
+        yesterdayPayments: parseInt(previousStats.successful_payments || 0),
+        yesterdayCancellations: parseInt(previousStats.cancellations || 0),
+        yesterdaySuccessRate: parseInt(previousStats.success_rate || 0)
+      },
+      recentTransactions: paymentsResult.rows,
+      recentCancellations: cancellationsResult.rows
+    };
+
+    console.log('API Response:', JSON.stringify(response, null, 2));
+    res.json(response);
 
   } catch (error) {
-    console.error('Recent Refunds API Error:', error);
+    console.error('Dashboard API Error:', error);
     res.status(500).json({ 
       success: false,
       error: 'Database error',

@@ -73,38 +73,37 @@ export default function Dashboard() {
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
+      // Veritabanından payment_log verilerini çek
       try {
-        // Paralel API çağrıları
-        const [metricsResponse, paymentsResponse, cancellationsResponse, refundsResponse] = await Promise.all([
-          fetch('/api/dashboard/metrics', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ today, yesterday })
-          }),
-          fetch('/api/dashboard/recent-payments'),
-          fetch('/api/dashboard/recent-cancellations'),
-          fetch('/api/dashboard/recent-refunds')
-        ]);
+        const response = await fetch('/api/dashboard/metrics', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            today,
+            yesterday
+          })
+        });
         
-        if (!metricsResponse.ok) {
-          throw new Error(`Metrics API error: ${metricsResponse.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
         
-        const metricsData = await metricsResponse.json();
-        const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : { payments: [] };
-        const cancellationsData = cancellationsResponse.ok ? await cancellationsResponse.json() : { cancellations: [] };
-        const refundsData = refundsResponse.ok ? await refundsResponse.json() : { refunds: [] };
+        const dashboardData = await response.json();
+        console.log('Dashboard API Response:', dashboardData);
         
-        if (metricsData.success) {
-          setMetrics(metricsData.metrics);
-          setRecentTransactions(paymentsData.payments || []);
-          // İptal ve iadeleri birleştir
-          setRecentCancellations([
-            ...(cancellationsData.cancellations || []),
-            ...(refundsData.refunds || [])
-          ]);
+        if (dashboardData.success) {
+          console.log('Setting data:', {
+            metrics: dashboardData.metrics,
+            recentTransactions: dashboardData.recentTransactions,
+            recentCancellations: dashboardData.recentCancellations
+          });
+          setMetrics(dashboardData.metrics);
+          setRecentTransactions(dashboardData.recentTransactions || []);
+          setRecentCancellations(dashboardData.recentCancellations || []);
         } else {
-          throw new Error(metricsData.message || 'API hatası');
+          throw new Error(dashboardData.message || 'API hatası');
         }
         
       } catch (apiError) {
@@ -196,8 +195,32 @@ export default function Dashboard() {
             yesterdaySuccessRate: 70,
           });
           
-          setRecentTransactions([]);
-          setRecentCancellations([]);
+          // Mock transaction verisi
+          const mockTransactions: Transaction[] = Array.from({ length: 5 }, (_, i) => ({
+            id: `mock_pay_${Date.now()}_${i}`,
+            amount: `${(Math.random() * 400 + 100).toFixed(2)} TL`,
+            status: Math.random() > 0.15 ? 'Başarılı' : 'Hata',
+            time: new Date(Date.now() - i * 20 * 60 * 1000).toLocaleTimeString('tr-TR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            card: `****${Math.floor(Math.random() * 9000) + 1000}`,
+          }));
+          
+          // Mock cancellation verisi
+          const mockCancellations: Cancellation[] = Array.from({ length: 3 }, (_, i) => ({
+            id: `mock_cancel_${Date.now()}_${i}`,
+            amount: `${(Math.random() * 300 + 50).toFixed(2)} TL`,
+            type: i % 2 === 0 ? 'İptal' : 'İade',
+            time: new Date(Date.now() - i * 30 * 60 * 1000).toLocaleTimeString('tr-TR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }),
+            reason: i % 2 === 0 ? 'Müşteri talebi' : 'İade talebi',
+          }));
+          
+          setRecentTransactions(mockTransactions);
+          setRecentCancellations(mockCancellations);
         }
       }
       
@@ -236,9 +259,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
-          <h1 className="mb-2 text-lg font-semibold tracking-tight">Dashboard</h1>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+          <h1 className="mb-2 text-xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-sm text-neutral-400">
             Veriler yükleniyor...
           </p>
@@ -248,18 +271,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
-        <h1 className="mb-2 text-lg font-semibold tracking-tight">Dashboard</h1>
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6">
+        <h1 className="mb-2 text-xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-neutral-400">
           Genel durum, son işlemler ve özet raporlar.
         </p>
       </div>
 
       {/* Metrik kartları */}
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4">
         <MetricCard 
-          title="Bugünkü Koşular" 
+          title="Son 24 Saat" 
           value={metrics.todayRuns.toString()} 
           change={calculateChange(metrics.todayRuns, metrics.yesterdayRuns)} 
         />
@@ -281,7 +304,7 @@ export default function Dashboard() {
       </div>
 
       {/* Son işlemler */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <RecentTransactions 
           transactions={recentTransactions} 
           onTransactionClick={setSelectedTransaction}
@@ -290,6 +313,41 @@ export default function Dashboard() {
           cancellations={recentCancellations} 
           onCancellationClick={setSelectedCancellation}
         />
+      </div>
+
+      {/* Changelog Card */}
+      <div className="rounded-2xl border border-neutral-800 bg-gradient-to-r from-violet-900/20 to-purple-900/20 p-6 border-violet-700/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-violet-100 mb-2">📋 Changelog</h2>
+            <p className="text-sm text-violet-300 mb-4">
+              Son güncellemeler ve yeni özellikler
+            </p>
+            <div className="space-y-2 text-xs text-violet-200/80">
+              <div className="flex items-center gap-2">
+                <span className="text-green-400">✨</span>
+                <span>HTML Export Tam Expanded Format</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-blue-400">⚡</span>
+                <span>Dashboard ve Metrik API Ayrımı</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-blue-400">⚡</span>
+                <span>İkon Sadeleştirmesi ve Scale Küçültme</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <a 
+              href="/changelog" 
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm rounded-lg transition-colors font-medium"
+            >
+              Tümünü Gör
+            </a>
+            <div className="text-xs text-violet-300 text-center">v2.1.0</div>
+          </div>
+        </div>
       </div>
 
       {/* Transaction Detail Modal */}
@@ -325,9 +383,9 @@ export default function Dashboard() {
 
 function Card({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-5">
       <div className="text-xs text-neutral-400">{title}</div>
-      <div className="mt-1 text-xl font-semibold">{value}</div>
+      <div className="mt-2 text-2xl font-semibold">{value}</div>
     </div>
   );
 }
@@ -360,25 +418,27 @@ function RecentTransactions({
   transactions: Transaction[];
   onTransactionClick: (transaction: Transaction) => void;
 }) {
+  console.log('RecentTransactions received:', transactions.length, 'transactions');
+  
   if (transactions.length === 0) {
     return (
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <h2 className="mb-3 text-base font-semibold">Son 5 Ödeme</h2>
-        <div className="text-center text-sm text-neutral-400 py-6">
-          Bugün henüz ödeme işlemi yapılmamış
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
+        <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - Ödemeler</h2>
+        <div className="text-center text-sm text-neutral-400 py-8">
+          Son 24 saatte ödeme işlemi yapılmamış
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <h2 className="mb-3 text-base font-semibold">Son 5 Ödeme</h2>
-      <div className="space-y-2">
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
+      <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - Ödemeler</h2>
+      <div className="space-y-3">
         {transactions.map((payment) => (
           <div 
             key={payment.id} 
-            className="flex items-center justify-between rounded-lg bg-neutral-800/50 p-2.5 cursor-pointer hover:bg-neutral-800/70 transition-colors"
+            className="flex items-center justify-between rounded-lg bg-neutral-800/50 p-3 cursor-pointer hover:bg-neutral-800/70 transition-colors"
             onClick={() => onTransactionClick(payment)}
           >
             <div className="flex flex-col">
@@ -389,7 +449,7 @@ function RecentTransactions({
               </div>
               <div className="text-xs text-neutral-400">{payment.card} • {payment.time}</div>
             </div>
-            <div className={`rounded-full px-2 py-0.5 text-xs ${
+            <div className={`rounded-full px-2 py-1 text-xs ${
               payment.status === 'Başarılı' 
                 ? 'bg-green-900/50 text-green-400' 
                 : 'bg-red-900/50 text-red-400'
@@ -410,93 +470,46 @@ function RecentCancellations({
   cancellations: Cancellation[];
   onCancellationClick: (cancellation: Cancellation) => void;
 }) {
-  // İptal ve iade işlemlerini ayır
-  const cancelItems = cancellations.filter(c => c.type === 'İptal');
-  const refundItems = cancellations.filter(c => c.type === 'İade');
-
+  console.log('RecentCancellations received:', cancellations.length, 'cancellations');
+  
   if (cancellations.length === 0) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-          <h2 className="mb-3 text-base font-semibold">Son 5 İptal</h2>
-          <div className="text-center text-sm text-neutral-400 py-6">
-            Bugün henüz iptal işlemi yapılmamış
-          </div>
-        </div>
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-          <h2 className="mb-3 text-base font-semibold">Son 5 İade</h2>
-          <div className="text-center text-sm text-neutral-400 py-6">
-            Bugün henüz iade işlemi yapılmamış
-          </div>
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
+        <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - İptal/İade</h2>
+        <div className="text-center text-sm text-neutral-400 py-8">
+          Son 24 saatte iptal/iade işlemi yapılmamış
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* İptal İşlemleri */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <h2 className="mb-3 text-base font-semibold">Son 5 İptal</h2>
-        {cancelItems.length === 0 ? (
-          <div className="text-center text-sm text-neutral-400 py-3">
-            Bugün henüz iptal işlemi yapılmamış
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {cancelItems.slice(0, 5).map((cancellation) => (
-              <div 
-                key={cancellation.id} 
-                className="flex items-center justify-between rounded-lg bg-neutral-800/50 p-2.5 cursor-pointer hover:bg-neutral-800/70 transition-colors"
-                onClick={() => onCancellationClick(cancellation)}
-              >
-                <div className="flex flex-col">
-                  <div className="text-sm font-medium">{cancellation.amount}</div>
-                  <div className="text-xs text-neutral-400">
-                    Payment ID: {cancellation.id}
-                    {cancellation.order_id && ` • Order ID: ${cancellation.order_id}`}
-                  </div>
-                  <div className="text-xs text-neutral-400">{cancellation.reason} • {cancellation.time}</div>
-                </div>
-                <div className="rounded-full px-2 py-0.5 text-xs bg-orange-900/50 text-orange-400">
-                  İptal
-                </div>
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
+      <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - İptal/İade</h2>
+      <div className="space-y-3">
+        {cancellations.map((cancellation) => (
+          <div 
+            key={cancellation.id} 
+            className="flex items-center justify-between rounded-lg bg-neutral-800/50 p-3 cursor-pointer hover:bg-neutral-800/70 transition-colors"
+            onClick={() => onCancellationClick(cancellation)}
+          >
+            <div className="flex flex-col">
+              <div className="text-sm font-medium">{cancellation.amount}</div>
+              <div className="text-xs text-neutral-400">
+                Payment ID: {cancellation.id}
+                {cancellation.order_id && ` • Order ID: ${cancellation.order_id}`}
               </div>
-            ))}
+              <div className="text-xs text-neutral-400">{cancellation.reason} • {cancellation.time}</div>
+            </div>
+            <div className={`rounded-full px-2 py-1 text-xs ${
+              cancellation.type === 'İptal' 
+                ? 'bg-orange-900/50 text-orange-400' 
+                : 'bg-blue-900/50 text-blue-400'
+            }`}>
+              {cancellation.type}
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* İade İşlemleri */}
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <h2 className="mb-3 text-base font-semibold">Son 5 İade</h2>
-        {refundItems.length === 0 ? (
-          <div className="text-center text-sm text-neutral-400 py-3">
-            Bugün henüz iade işlemi yapılmamış
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {refundItems.slice(0, 5).map((cancellation) => (
-              <div 
-                key={cancellation.id} 
-                className="flex items-center justify-between rounded-lg bg-neutral-800/50 p-2.5 cursor-pointer hover:bg-neutral-800/70 transition-colors"
-                onClick={() => onCancellationClick(cancellation)}
-              >
-                <div className="flex flex-col">
-                  <div className="text-sm font-medium">{cancellation.amount}</div>
-                  <div className="text-xs text-neutral-400">
-                    Payment ID: {cancellation.id}
-                    {cancellation.order_id && ` • Order ID: ${cancellation.order_id}`}
-                  </div>
-                  <div className="text-xs text-neutral-400">{cancellation.reason} • {cancellation.time}</div>
-                </div>
-                <div className="rounded-full px-2 py-0.5 text-xs bg-blue-900/50 text-blue-400">
-                  İade
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        ))}
       </div>
     </div>
   );
