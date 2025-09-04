@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banka Regresyon Wizard - Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Modal Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <!-- Modal Content -->
+        <div class="bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-700">
+                <h2 class="text-2xl font-bold text-white">
+                    <i class="fas fa-rocket mr-2 text-emerald-500"></i>
+                    Banka Regresyon Testi Başlat
+                </h2>
+                <button class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="px-6 py-4 bg-gray-900">
+                <div class="flex items-center justify-center">
+                    <div class="flex items-center space-x-4">
+                        <!-- Step 1 - Active -->
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                            <span class="ml-2 text-emerald-400 font-medium">Banka & Ortam</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-600"></div>
+                        
+                        <!-- Step 2 -->
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                            <span class="ml-2 text-gray-400">Senaryo Seçimi</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-600"></div>
+                        
+                        <!-- Step 3 -->
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                            <span class="ml-2 text-gray-400">Kart Seçimi</span>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-600"></div>
+                        
+                        <!-- Step 4 -->
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                            <span class="ml-2 text-gray-400">Özet & Çalıştır</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Content -->
+            <div class="p-6 overflow-y-auto max-h-96">
+                <h3 class="text-xl font-semibold mb-6">Adım 1: Banka ve Ortam Seçimi</h3>
+                
+                <!-- Environment Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-3">Test Ortamı</label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="environment" value="stb" class="mr-2" checked>
+                            <span class="bg-yellow-600 px-3 py-1 rounded-full text-sm font-medium">STB (Test)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="environment" value="prp" class="mr-2">
+                            <span class="bg-red-600 px-3 py-1 rounded-full text-sm font-medium">PRP (Canlı)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Bank Selection -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-medium">Banka Seçimi</label>
+                        <div class="space-x-2">
+                            <button class="text-emerald-400 hover:text-emerald-300 text-sm" onclick="selectAllBanks()">
+                                <i class="fas fa-check-square mr-1"></i>Tümünü Seç
+                            </button>
+                            <button class="text-emerald-400 hover:text-emerald-300 text-sm" onclick="clearAllBanks()">
+                                <i class="fas fa-square mr-1"></i>Temizle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Bank Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-emerald-500">
+                            <input type="checkbox" class="sr-only" checked>
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">AKBANK</div>
+                                <div class="text-xs text-gray-400">Kanal: 200101</div>
+                                <div class="text-xs text-emerald-400">✓ Aktif</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-emerald-500">
+                            <input type="checkbox" class="sr-only" checked>
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">DENİZBANK</div>
+                                <div class="text-xs text-gray-400">Kanal: 200102</div>
+                                <div class="text-xs text-orange-400">⚠ Uyarı</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-emerald-500">
+                            <input type="checkbox" class="sr-only" checked>
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">GARANTİ</div>
+                                <div class="text-xs text-gray-400">Kanal: 200103</div>
+                                <div class="text-xs text-emerald-400">✓ Aktif</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">VAKIFBANK</div>
+                                <div class="text-xs text-gray-400">Kanal: 200104</div>
+                                <div class="text-xs text-red-400">✗ Hata</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-blue-500">
+                            <input type="checkbox" class="sr-only" checked>
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">KUVEYT</div>
+                                <div class="text-xs text-gray-400">Kanal: 200105</div>
+                                <div class="text-xs text-green-400">✓ Aktif</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">HALKBANK</div>
+                                <div class="text-xs text-gray-400">Kanal: 200106</div>
+                                <div class="text-xs text-gray-400">○ Beklemede</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">İŞBANK</div>
+                                <div class="text-xs text-gray-400">Kanal: 200107</div>
+                                <div class="text-xs text-gray-400">○ Beklemede</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">ZIRAAT</div>
+                                <div class="text-xs text-gray-400">Kanal: 200108</div>
+                                <div class="text-xs text-gray-400">○ Beklemede</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">QNB</div>
+                                <div class="text-xs text-gray-400">Kanal: 200109</div>
+                                <div class="text-xs text-gray-400">○ Beklemede</div>
+                            </div>
+                        </label>
+
+                        <label class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 cursor-pointer transition-colors border-2 border-gray-600">
+                            <input type="checkbox" class="sr-only">
+                            <div class="text-center">
+                                <div class="text-lg font-bold mb-1">YAPIKRED</div>
+                                <div class="text-xs text-gray-400">Kanal: 200110</div>
+                                <div class="text-xs text-gray-400">○ Beklemede</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Selection Summary -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Seçim Özeti</h4>
+                    <div class="text-sm text-gray-300">
+                        <span class="text-emerald-400 font-medium">4 banka</span> seçildi: AKBANK, DENİZBANK, GARANTİ, KUVEYT
+                    </div>
+                    <div class="text-sm text-gray-400 mt-1">
+                        Tahmini test süresi: <span class="text-orange-400">~8-12 dakika</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-700 flex justify-between">
+                <button class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Geri
+                </button>
+                <button class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium transition-colors">
+                    İleri <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectAllBanks() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.parentElement.classList.add('border-emerald-500');
+                cb.parentElement.classList.remove('border-gray-600');
+            });
+        }
+
+        function clearAllBanks() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.parentElement.classList.remove('border-emerald-500');
+                cb.parentElement.classList.add('border-gray-600');
+            });
+        }
+
+        // Toggle selection on click
+        document.querySelectorAll('label').forEach(label => {
+            label.addEventListener('click', function() {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    setTimeout(() => {
+                        if (checkbox.checked) {
+                            this.classList.add('border-emerald-500');
+                            this.classList.remove('border-gray-600');
+                        } else {
+                            this.classList.remove('border-emerald-500');
+                            this.classList.add('border-gray-600');
+                        }
+                    }, 10);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

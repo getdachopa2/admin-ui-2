@@ -10,8 +10,8 @@ export default defineConfig({
   plugins: [react()],
   server: { 
     proxy: { 
-      '/webhook': { target: 'http://localhost:5701', changeOrigin: true },
-      '/api': { target: 'http://localhost:3001', changeOrigin: true }
+      '/webhook': { target: 'http://127.0.0.1:5701', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:3001', changeOrigin: true }
     } 
   },
   resolve:{ alias:{ '@': resolve(__dirname,'src') } }

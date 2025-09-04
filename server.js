@@ -28,10 +28,14 @@ app.post('/api/dashboard/metrics', async (req, res) => {
     const { today, yesterday } = req.body;
     console.log('Dashboard API called with:', { today, yesterday });
 
-    // Son 24 saat ve önceki 24 saat metrikler
+    // Test database connection first
+    const testConnection = await pool.query('SELECT NOW() as current_time');
+    console.log('Database connection test:', testConnection.rows[0]);
+
+    // Bugünkü ve dünkü metrikler
     const metricsQuery = `
       SELECT 
-        'recent' as period,
+        'today' as period,
         COUNT(*) as total_runs,
         COUNT(CASE WHEN success_bool = true THEN 1 END) as successful_payments,
         COUNT(CASE WHEN cancel_date IS NOT NULL OR refund_date IS NOT NULL THEN 1 END) as cancellations,
@@ -39,12 +43,12 @@ app.post('/api/dashboard/metrics', async (req, res) => {
           (COUNT(CASE WHEN success_bool = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0)), 0
         ) as success_rate
       FROM app.payment_log 
-      WHERE created_at >= NOW() - INTERVAL '24 hours'
+      WHERE DATE(created_at) = $1
 
       UNION ALL
 
       SELECT 
-        'previous' as period,
+        'yesterday' as period,
         COUNT(*) as total_runs,
         COUNT(CASE WHEN success_bool = true THEN 1 END) as successful_payments,
         COUNT(CASE WHEN cancel_date IS NOT NULL OR refund_date IS NOT NULL THEN 1 END) as cancellations,
@@ -52,11 +56,10 @@ app.post('/api/dashboard/metrics', async (req, res) => {
           (COUNT(CASE WHEN success_bool = true THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0)), 0
         ) as success_rate
       FROM app.payment_log 
-      WHERE created_at >= NOW() - INTERVAL '48 hours' 
-        AND created_at < NOW() - INTERVAL '24 hours'
+      WHERE DATE(created_at) = $2
     `;
 
-    // Son 24 saat içindeki son 5 ödeme
+    // Son 5 ödeme
     const paymentsQuery = `
       SELECT 
         payment_id as id,
@@ -76,14 +79,14 @@ app.post('/api/dashboard/metrics', async (req, res) => {
         card_token,
         result_code
       FROM app.payment_log 
-      WHERE created_at >= NOW() - INTERVAL '24 hours'
+      WHERE DATE(created_at) = $1 
         AND cancel_date IS NULL 
         AND refund_date IS NULL
       ORDER BY created_at DESC 
       LIMIT 5
     `;
 
-    // Son 24 saat içindeki son 5 iptal/iade
+    // Son 5 iptal/iade
     const cancellationsQuery = `
       SELECT 
         payment_id as id,
@@ -109,7 +112,7 @@ app.post('/api/dashboard/metrics', async (req, res) => {
         cancel_result_code,
         refund_result_code
       FROM app.payment_log 
-      WHERE created_at >= NOW() - INTERVAL '24 hours'
+      WHERE DATE(created_at) = $1 
         AND (cancel_date IS NOT NULL OR refund_date IS NOT NULL)
       ORDER BY COALESCE(cancel_date, refund_date, created_at) DESC 
       LIMIT 5
@@ -117,9 +120,9 @@ app.post('/api/dashboard/metrics', async (req, res) => {
 
     // Tüm query'leri çalıştır
     const [metricsResult, paymentsResult, cancellationsResult] = await Promise.all([
-      pool.query(metricsQuery),
-      pool.query(paymentsQuery),
-      pool.query(cancellationsQuery)
+      pool.query(metricsQuery, [today, yesterday]),
+      pool.query(paymentsQuery, [today]),
+      pool.query(cancellationsQuery, [today])
     ]);
 
     console.log('Query results:');
@@ -128,20 +131,20 @@ app.post('/api/dashboard/metrics', async (req, res) => {
     console.log('Cancellations:', cancellationsResult.rows.length, 'items');
 
     // Metrikleri parse et
-    const recentStats = metricsResult.rows.find(row => row.period === 'recent') || {};
-    const previousStats = metricsResult.rows.find(row => row.period === 'previous') || {};
+    const todayStats = metricsResult.rows.find(row => row.period === 'today') || {};
+    const yesterdayStats = metricsResult.rows.find(row => row.period === 'yesterday') || {};
 
     const response = {
       success: true,
       metrics: {
-        todayRuns: parseInt(recentStats.total_runs || 0),
-        successfulPayments: parseInt(recentStats.successful_payments || 0),
-        cancellations: parseInt(recentStats.cancellations || 0),
-        successRate: parseInt(recentStats.success_rate || 0),
-        yesterdayRuns: parseInt(previousStats.total_runs || 0),
-        yesterdayPayments: parseInt(previousStats.successful_payments || 0),
-        yesterdayCancellations: parseInt(previousStats.cancellations || 0),
-        yesterdaySuccessRate: parseInt(previousStats.success_rate || 0)
+        todayRuns: parseInt(todayStats.total_runs || 0),
+        successfulPayments: parseInt(todayStats.successful_payments || 0),
+        cancellations: parseInt(todayStats.cancellations || 0),
+        successRate: parseInt(todayStats.success_rate || 0),
+        yesterdayRuns: parseInt(yesterdayStats.total_runs || 0),
+        yesterdayPayments: parseInt(yesterdayStats.successful_payments || 0),
+        yesterdayCancellations: parseInt(yesterdayStats.cancellations || 0),
+        yesterdaySuccessRate: parseInt(yesterdayStats.success_rate || 0)
       },
       recentTransactions: paymentsResult.rows,
       recentCancellations: cancellationsResult.rows
@@ -165,6 +168,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.listen(port, () => {
-  console.log(`API Server running on port ${port}`);
+app.listen(port, '127.0.0.1', () => {
+  console.log(`API Server running on http://127.0.0.1:${port}`);
 });
