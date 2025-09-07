@@ -40,7 +40,7 @@ const looksTerminal = (steps: RunStep[], flow: string) => {
   
   // Bank Regression akışları için terminal koşulları
   if (flow === 'bankRegression') {
-    return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|final.*rapor|report.*final/i.test(txt);
+    return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|test.*tamamlandı|final.*rapor|report.*final|done/i.test(txt);
   }
   
   // Payment akışları için daha geniş terminal kontrol
@@ -69,6 +69,8 @@ export function useProgress(
   const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund' | 'bankRegression'>(
     flow === 'dual' ? 'payment' : (flow as 'payment' | 'cancelRefund' | 'bankRegression')
   );
+  const [isHybridMode, setIsHybridMode] = useState<boolean>(flow === 'bankRegression');
+  const [hasSeenPaymentStart, setHasSeenPaymentStart] = useState<boolean>(false);
 
   // Flow parametresi değiştiğinde currentFlow'u güncelle ve polling'i yeniden başlat
   useEffect(() => {
@@ -196,6 +198,21 @@ export function useProgress(
             response: e.response,
           }));
 
+          // Hybrid mode: Bank regression'da payment başladığını tespit et
+          if (isHybridMode && !hasSeenPaymentStart) {
+            const paymentStarted = newSteps.some(step => 
+              /payment.*start|ödeme.*başla|executing.*payment|payment.*workflow/i.test(
+                `${step.name || ''} ${step.message || ''}`
+              )
+            );
+            
+            if (paymentStarted) {
+              console.log('[useProgress] Payment workflow started, switching to payment events');
+              setHasSeenPaymentStart(true);
+              setCurrentFlow('payment');
+            }
+          }
+
           const nextCursor =
             typeof res?.nextCursor === 'number' ? res.nextCursor : cursorRef.current;
 
@@ -262,9 +279,8 @@ export function useProgress(
                                  cancelRunKeyStep.message?.match(/runkey[:\s]+([a-zA-Z0-9\-_]+)/i)?.[1];
                 
                 if (newRunKey && onPaymentSuccess) {
-                  // RunKey'den başındaki = işaretini temizle
-                  const cleanNewRunKey = newRunKey.replace(/^=+/, '');
-                  console.log('[useProgress] Found new cancel runKey:', newRunKey, '-> cleaned:', cleanNewRunKey);
+                  // RunKey'i API'den döndüğü şekliyle kullan
+                  console.log('[useProgress] Found new cancel runKey:', newRunKey);
                   console.log('[useProgress] Switching to cancelRefund flow and restarting polling');
                   
                   // Flow'u değiştir ve polling'i yeniden başlat
@@ -274,7 +290,7 @@ export function useProgress(
                   cancelled = true;
                   abortRef.current?.abort();
                   
-                  onPaymentSuccess(cleanNewRunKey);
+                  onPaymentSuccess(newRunKey);
                   return prev;
                 }
               }

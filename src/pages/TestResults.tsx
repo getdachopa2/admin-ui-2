@@ -68,7 +68,7 @@ export default function TestResults() {
         return /cancel.*success|iptal.*başar|refund.*success|iade.*başar|işlem.*tamamlan|final.*rapor/i.test(content);
       } else if (currentFlow === 'bankRegression') {
         // Bank Regression akışı için spesifik terminal kelimeler
-        return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|final.*rapor|report.*final|all.*banks.*tested|tüm.*bankalar.*test/i.test(content);
+        return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|test.*tamamlandı|final.*rapor|report.*final|all.*banks.*tested|tüm.*bankalar.*test|done/i.test(content);
       } else {
         // Payment akışı için genel terminal kelimeler
         return /payment.*success|ödeme.*başar|işlem.*tamamlan|final.*rapor|tamamlan/i.test(content);

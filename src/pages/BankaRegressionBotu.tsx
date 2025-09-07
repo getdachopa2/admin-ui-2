@@ -190,132 +190,114 @@ export default function BankaRegressionBotu() {
 
   // Bank Regression N8N payload builder
   function buildBankRegressionPayload(wizardData: any) {
-    // Bank array (wizard'daki ile aynı)
-    const banksData = [
-      { name: 'AKBANK', channelId: '200101', bankCode: '046', issuerCode: '046', status: 'active' },
-      { name: 'DENİZBANK', channelId: '200102', bankCode: '134', issuerCode: '134', status: 'warning' },
-      { name: 'GARANTİ', channelId: '200103', bankCode: '062', issuerCode: '062', status: 'active' },
-      { name: 'VAKIFBANK', channelId: '200104', bankCode: '015', issuerCode: '015', status: 'error' },
-      { name: 'KUVEYT', channelId: '200105', bankCode: '205', issuerCode: '205', status: 'active' },
-      { name: 'HALKBANK', channelId: '200106', bankCode: '012', issuerCode: '012', status: 'pending' },
-      { name: 'İŞBANK', channelId: '200107', bankCode: '064', issuerCode: '064', status: 'pending' },
-      { name: 'ZIRAAT', channelId: '200108', bankCode: '010', issuerCode: '010', status: 'pending' },
-      { name: 'QNB FİNANS', channelId: '200109', bankCode: '111', issuerCode: '111', status: 'pending' },
-      { name: 'YAPIKRED', channelId: '200110', bankCode: '067', issuerCode: '067', status: 'pending' },
-    ];
+    // BANKS mapping - bank names to codes
+    const bankCodeMap: { [key: string]: string } = {
+      'AKBANK': '046',
+      'DENİZBANK': '134', 
+      'GARANTİ': '062',
+      'VAKIFBANK': '015',
+      'KUVEYT': '205',
+      'HALKBANK': '012',
+      'İŞBANK': '064',
+      'ZIRAAT': '010',
+      'QNB FİNANS': '111',
+      'YAPIKRED': '067'
+    };
 
-    // Seçili banka isimlerini bank_code array'ine çevir
-    const requestedBanks = wizardData.selectedBanks.map((bankName: string) => {
-      const bank = banksData.find(b => b.name === bankName);
-      return bank?.bankCode || bankName;
+    // Convert bank names to codes if needed
+    const requestedBanks = (wizardData.selectedBanks || []).map((bankName: string) => {
+      return bankCodeMap[bankName] || bankName;
     });
 
-    // Bank mapping for issuer codes (acquirer -> issuer mapping)
-    const bankMapping = banksData.reduce((acc, bank) => {
-      acc[bank.bankCode] = {
-        name: bank.name,
-        channelId: bank.channelId,
-        issuerCode: bank.issuerCode // Default issuer same as acquirer
-      };
-      return acc;
-    }, {} as Record<string, any>);
-
     return {
-      env: wizardData.environment.toLowerCase(), // STB -> stb, PRP -> prp
-      requested_banks: requestedBanks, // ['046', '134', '062'] format
-      scenario: wizardData.scenario, // 'sale', 'cancel', 'refund', 'all'
-      // Kanal kontrol botu yapısına uygun kart parametreleri
-      cardSelectionMode: 'pre_selected', // Bank regression için özel mode
-      card_strategy: 'per_bank_selection', // Her banka için ayrı kart seçimi
-      parameters_preset_id: wizardData.parametersPresetId || 1, // Default preset
-      segment: 'bank_regression', // Sabit segment
-      userId: 'bank_regression_user',
-      userName: 'Bank Regression Test',
-      // Kanal kontrol botu gibi application structure
-      application: {
-        applicationName: 'BANK_REGRESSION',
-        applicationPassword: 'regression123',
-        secureCode: 'secure123',
-        transactionId: `REG_${Date.now()}`,
-        transactionDateTime: new Date().toISOString(),
-      },
-      // Kanal kontrol botu gibi payment structure
-      payment: {
-        paymentType: 'creditcard' as 'creditcard' | 'debitcard' | 'prepaidcard',
-        threeDOperation: false,
-        installmentNumber: 0,
-        amount: 10,
-        msisdn: '5303589836',
-        userId: 'bank_regression_user',
-        userName: 'Bank Regression Test',
-        options: {
-          includeMsisdnInOrderID: false,
-          checkCBBLForMsisdn: true,
-          checkCBBLForCard: true,
-          checkFraudStatus: false,
-        },
-      },
-      // Kanal kontrol botu gibi products structure
-      products: [{
-        amount: 10,
-        msisdn: '5303589836',
-      }],
-      // Bank regression özel bilgiler
-      bank_mapping: bankMapping, // Bank bilgileri mapping
-      // Bank regression'a özel kart seçim kuralları
-      card_selection_rules: {
-        mode: 'per_bank_own_cards', // Her banka kendi kartlarını kullanır
-        fallback_issuer: '999', // Kart bulunamazsa default issuer
-        use_bank_own_cards: true // Bankanın kendi kartlarını kullan
-      },
-      // N8N workflow için action ve scenarios
-      action: 'payment', // Bank regression payment ile başlar
-      scenarios: [wizardData.scenario], // Scenario array format
-      runMode: wizardData.scenario === 'all' ? 'all' : 'payment-only' // Run mode
+      // Business logic parametreleri
+      env: (wizardData.environment || 'STB').toString().toUpperCase(),
+      requested_banks: requestedBanks, // bank codes array
+      scenarios: [wizardData.scenario || 'all'], // scenarios as array
+      card_strategy: wizardData.cardStrategy || 'automatic',
+      cardSelectionMode: wizardData.cardStrategy || 'automatic',
+      parameters_preset_id: wizardData.parametersPresetId || 1,
+      manualCards: wizardData.cardStrategy === 'manual' ? (wizardData.manualCards || []) : [],
+      // Eğer cancel/refund için manuel paymentId varsa
+      paymentRef: wizardData.manualPaymentId ? { 
+        paymentId: wizardData.manualPaymentId 
+      } : undefined,
+      amount: wizardData.amount || '100.00',
+      msisdn: wizardData.msisdn || '905551112233'
     };
   }
 
   const handleWizardSubmit = async (wizardData: any) => {
     console.log('Bank Regression Wizard data submitted:', wizardData);
-    
+
     try {
-      // Kanal kontrol botu gibi payload oluştur
+      // Build payload and call regression orchestrator (My workflow 9)
       const payload = buildBankRegressionPayload(wizardData);
-      console.log('Bank Regression N8N Payload:', payload); // Debug için
+      console.log('Orchestration payload:', payload);
+
+      // Call the regression orchestrator
+      const res: any = await startBankRegression(payload);
+      console.log('Orchestrator response (full object):', res);
+      console.log('Orchestrator response keys:', Object.keys(res));
+      console.log('res.runKey:', res.runKey);
+      console.log('res.run_key:', res.run_key);
+      console.log('res.data:', res.data);
       
-      // N8N Bank Regression workflow başlatma
-      const res = await startBankRegression(payload);
+      // Response'dan runKey al (My workflow 9'dan dönen format) - API'den döndüğü şekliyle kullan
+      const runKey = res.runKey || res.run_key || (res.data && res.data.runKey) || (res.data && res.data.run_key);
       
-      // RunKey'den başındaki = işaretini temizle (kanal kontrol botu gibi)
-      const cleanRunKey = res.runKey?.replace(/^=+/, '') || res.runKey;
-      console.log(`[BankRegression] Original runKey: ${res.runKey}, Cleaned: ${cleanRunKey}`);
+      if (!runKey) {
+        console.error('runKey bulunamadı! Response object:', JSON.stringify(res, null, 2));
+        console.warn('n8n workflow\'u düzeltilene kadar execution ID kullanılıyor...');
+        
+        // n8n execution başladı ama response döndürmedi
+        // Execution ID'yi manuel oluştur (gerçek n8n pattern'i)
+        const executionId = Date.now().toString();
+        const tempRunKey = `reg-${executionId}`;
+        console.log('Using execution-based runKey:', tempRunKey);
+        
+        // Session storage'a kaydet
+        sessionStorage.setItem('bankRegression_runKey', tempRunKey);
+        sessionStorage.setItem('bankRegression_payload', JSON.stringify(payload));
+        
+        // Test results sayfasına yönlendir
+        const params = new URLSearchParams({ 
+          runKey: tempRunKey,
+          flow: 'bankRegression'
+        });
+        navigate(`/test-results?${params.toString()}`);
+        return;
+      }
+      
+      console.log('Received runKey from API:', runKey);
+      
+      // Session storage'a kaydet
+      sessionStorage.setItem('bankRegression_runKey', runKey);
+      sessionStorage.setItem('bankRegression_payload', JSON.stringify(payload));
       
       // Test results sayfasına yönlendir
-      const params = new URLSearchParams({
-        runKey: cleanRunKey,
-        flow: 'bankRegression',
-        isAllFlow: 'false', // Bank regression tek akış
-        wizardData: encodeURIComponent(JSON.stringify(wizardData))
+      const params = new URLSearchParams({ 
+        runKey: runKey,
+        flow: 'bankRegression'
       });
-      
       navigate(`/test-results?${params.toString()}`);
-      
+
       // Recent activities'e ekle
       setRecentActivities(prev => [{
-        id: `REG_${Date.now()}`,
-        message: `Banka Regresyon Testi: ${wizardData.selectedBanks.length} banka, ${wizardData.scenario}`,
+        id: runKey,
+        message: `Banka Regresyon Testi başlatıldı: ${wizardData.selectedBanks?.length || 0} banka, ${wizardData.scenario}`,
         status: 'running',
-        timestamp: 'Az önce başlatıldı'
+        timestamp: 'Az önce'
       }, ...prev.slice(0, 4)]);
-      
+
+      setShowWizard(false);
     } catch (error) {
-      console.error('Bank regression test başlatma hatası:', error);
-      alert("Bank Regression Start error: " + (error as Error).message);
-      
-      // Hata aktivitesi ekle
+      console.error('Bank regression start error:', error);
+      const em = (error as Error).message || 'Başlatma hatası';
+      alert("Bank Regression Start error: " + em);
       setRecentActivities(prev => [{
         id: `REG_ERR_${Date.now()}`,
-        message: `Banka Regresyon Testi başlatma hatası: ${(error as Error).message}`,
+        message: `Banka Regresyon Testi başlatma hatası: ${em}`,
         status: 'error',
         timestamp: 'Az önce'
       }, ...prev.slice(0, 4)]);

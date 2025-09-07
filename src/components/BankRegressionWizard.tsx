@@ -10,16 +10,16 @@ interface BankRegressionWizardData {
 }
 
 const BANKS = [
-  { name: 'AKBANK', channelId: '200101', bankCode: '046', status: 'active' },
-  { name: 'DENİZBANK', channelId: '200102', bankCode: '134', status: 'warning' },
-  { name: 'GARANTİ', channelId: '200103', bankCode: '062', status: 'active' },
-  { name: 'VAKIFBANK', channelId: '200104', bankCode: '015', status: 'error' },
-  { name: 'KUVEYT', channelId: '200105', bankCode: '205', status: 'active' },
-  { name: 'HALKBANK', channelId: '200106', bankCode: '012', status: 'pending' },
-  { name: 'İŞBANK', channelId: '200107', bankCode: '064', status: 'pending' },
-  { name: 'ZIRAAT', channelId: '200108', bankCode: '010', status: 'pending' },
-  { name: 'QNB FİNANS', channelId: '200109', bankCode: '111', status: 'pending' },
-  { name: 'YAPIKRED', channelId: '200110', bankCode: '067', status: 'pending' },
+  { name: 'AKBANK', channelId: '999046', bankCode: '046', status: 'active' },
+  { name: 'DENİZBANK', channelId: '999134', bankCode: '134', status: 'warning' },
+  { name: 'GARANTİ', channelId: '999062', bankCode: '062', status: 'active' },
+  { name: 'VAKIFBANK', channelId: '999015', bankCode: '015', status: 'error' },
+  { name: 'KUVEYT', channelId: '999205', bankCode: '205', status: 'active' },
+  { name: 'HALKBANK', channelId: '999012', bankCode: '012', status: 'pending' },
+  { name: 'İŞBANK', channelId: '999064', bankCode: '064', status: 'pending' },
+  { name: 'ZIRAAT', channelId: '999010', bankCode: '010', status: 'pending' },
+  { name: 'QNB FİNANS', channelId: '999111', bankCode: '111', status: 'pending' },
+  { name: 'YAPIKRED', channelId: '999067', bankCode: '067', status: 'pending' },
 ];
 
 const SCENARIOS = [
