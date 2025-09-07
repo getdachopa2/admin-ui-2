@@ -38,6 +38,11 @@ const looksTerminal = (steps: RunStep[], flow: string) => {
     return /final.*rapor|report.*final|tamamlan.*son|cancel.*success|iptal.*başar|refund.*success|iade.*başar/i.test(txt);
   }
   
+  // Bank Regression akışları için terminal koşulları
+  if (flow === 'bankRegression') {
+    return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|final.*rapor|report.*final/i.test(txt);
+  }
+  
   // Payment akışları için daha geniş terminal kontrol
   return /final|rapor|report|tamamlan|payment.*success|ödeme.*başar/i.test(txt);
 };
@@ -45,13 +50,13 @@ const looksTerminal = (steps: RunStep[], flow: string) => {
 /**
  * waitSec: sunucuya uzun-poll timeout (saniye)
  * minGapMs: İKİ çağrı arası minimum bekleme (ms) – istemci tarafı throttle
- * flow: 'payment' | 'cancelRefund' | 'dual' - hangi endpoint'i kullanacağı
+ * flow: 'payment' | 'cancelRefund' | 'bankRegression' | 'dual' - hangi endpoint'i kullanacağı
  * switchToCancelAfterPayment: payment tamamlandığında cancel endpoint'ine geç
  */
 export function useProgress(
   params: {
     runKey: string | null;
-    flow?: 'payment' | 'cancelRefund' | 'dual';
+    flow?: 'payment' | 'cancelRefund' | 'bankRegression' | 'dual';
     switchToCancelAfterPayment?: boolean;
     onPaymentSuccess?: (newRunKey?: string) => void; // Payment başarısında çağrılacak callback, yeni runKey ile
     waitSec?: number;
@@ -61,14 +66,14 @@ export function useProgress(
   const { runKey, flow = 'payment', switchToCancelAfterPayment = false, onPaymentSuccess, waitSec = 25, minGapMs = 2000 } = params;
   const [data, setData] = useState<RunData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund'>(
-    flow === 'dual' ? 'payment' : (flow as 'payment' | 'cancelRefund')
+  const [currentFlow, setCurrentFlow] = useState<'payment' | 'cancelRefund' | 'bankRegression'>(
+    flow === 'dual' ? 'payment' : (flow as 'payment' | 'cancelRefund' | 'bankRegression')
   );
 
   // Flow parametresi değiştiğinde currentFlow'u güncelle ve polling'i yeniden başlat
   useEffect(() => {
     if (flow !== 'dual') {
-      const newFlow = flow as 'payment' | 'cancelRefund';
+      const newFlow = flow as 'payment' | 'cancelRefund' | 'bankRegression';
       if (currentFlow !== newFlow) {
         console.log(`[useProgress] Flow changed from ${currentFlow} to ${newFlow}, forcing restart`);
         setCurrentFlow(newFlow);

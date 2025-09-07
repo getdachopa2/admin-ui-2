@@ -4,10 +4,14 @@ const BASE = String(import.meta.env.VITE_N8N_BASE_URL || 'http://localhost:5701'
 const P_START         = String(import.meta.env.VITE_N8N_PAYMENT_START      || '/webhook/payment-test/start');
 // YENİ: İptal/iade için yeni endpoint yolu eklendi. .env dosyanıza VITE_N8N_CANCEL_REFUND_START olarak ekleyebilirsiniz.
 const P_CANCEL_REFUND = String(import.meta.env.VITE_N8N_CANCEL_REFUND_START || '/webhook/payment-test/cancel-refund-test');
+// YENİ: Bank Regression testleri için endpoint
+const P_BANK_REGRESSION = String(import.meta.env.VITE_N8N_BANK_REGRESSION_START || '/webhook/bank-regression/start');
 const P_PROGRESS      = String(import.meta.env.VITE_N8N_PAYMENT_PROGRESS || '/webhook/payment-test/progress');
 const P_CANCEL_REFUND_PROGRESS = String(import.meta.env.VITE_N8N_CANCEL_REFUND_PROGRESS || '/webhook/payment-test/cancel-refund/progress');
+const P_BANK_REGRESSION_PROGRESS = String(import.meta.env.VITE_N8N_BANK_REGRESSION_PROGRESS || '/webhook/bank-regression/progress');
 const P_EVENTS        = String(import.meta.env.VITE_N8N_EVENTS           || '/webhook/payment-test/events');
 const P_CANCEL_REFUND_EVENTS = String(import.meta.env.VITE_N8N_CANCEL_REFUND_EVENTS || '/webhook/payment-test/cancel-refund/events');
+const P_BANK_REGRESSION_EVENTS = String(import.meta.env.VITE_N8N_BANK_REGRESSION_EVENTS || '/webhook/bank-regression/events');
 const P_TEST_CARDS    = String(import.meta.env.VITE_N8N_TEST_CARDS       || '/webhook/query/get-cards');
 const P_CANDIDATES    = String(import.meta.env.VITE_N8N_CANDIDATES       || '/webhook/payment-test/candidates');
 const P_DASHBOARD     = String(import.meta.env.VITE_N8N_DASHBOARD        || '/webhook/dashboard/metrics');
@@ -107,13 +111,21 @@ export async function startCancelOrRefund(body: StartPayload, signal?: AbortSign
     return req<N8nStartResponse>(P_CANCEL_REFUND, { method: 'POST', body: JSON.stringify(body), signal });
 }
 
-export async function getProgress(runKey: string, flow: 'payment' | 'cancelRefund' = 'payment') {
-  const path = flow === 'payment' ? P_PROGRESS : P_CANCEL_REFUND_PROGRESS;
+export async function startBankRegression(body: any, signal?: AbortSignal) {
+    return req<N8nStartResponse>(P_BANK_REGRESSION, { method: 'POST', body: JSON.stringify(body), signal });
+}
+
+export async function getProgress(runKey: string, flow: 'payment' | 'cancelRefund' | 'bankRegression' = 'payment') {
+  const path = flow === 'payment' ? P_PROGRESS : 
+               flow === 'cancelRefund' ? P_CANCEL_REFUND_PROGRESS :
+               P_BANK_REGRESSION_PROGRESS;
   return getJSON<RunData>(path, { runKey });
 }
 
-export async function longPollEvents(runKey: string, cursor = 0, waitSec = 25, signal?: AbortSignal, flow: 'payment' | 'cancelRefund' = 'payment') {
-  const eventsPath = flow === 'payment' ? P_EVENTS : P_CANCEL_REFUND_EVENTS;
+export async function longPollEvents(runKey: string, cursor = 0, waitSec = 25, signal?: AbortSignal, flow: 'payment' | 'cancelRefund' | 'bankRegression' = 'payment') {
+  const eventsPath = flow === 'payment' ? P_EVENTS : 
+                     flow === 'cancelRefund' ? P_CANCEL_REFUND_EVENTS :
+                     P_BANK_REGRESSION_EVENTS;
   console.log(`[longPollEvents] Flow: ${flow}, Path: ${eventsPath}, URL: ${BASE}${eventsPath}, RunKey: ${runKey}`);
   const res = await getJSON<Partial<N8nEventsResponse>>(eventsPath, { runKey, cursor, waitSec }, signal);
   return {

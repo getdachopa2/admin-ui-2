@@ -13,7 +13,7 @@ export default function TestResults() {
   const navigate = useNavigate();
   
   const runKey = searchParams.get('runKey');
-  const currentFlow = (searchParams.get('flow') as 'payment' | 'cancelRefund') || 'payment';
+  const currentFlow = (searchParams.get('flow') as 'payment' | 'cancelRefund' | 'bankRegression') || 'payment';
   const isAllFlow = searchParams.get('isAllFlow') === 'true';
   const rawWizardData = searchParams.get('wizardData');
   
@@ -66,6 +66,9 @@ export default function TestResults() {
       if (currentFlow === 'cancelRefund') {
         // Cancel/Refund akışı için spesifik terminal kelimeler
         return /cancel.*success|iptal.*başar|refund.*success|iade.*başar|işlem.*tamamlan|final.*rapor/i.test(content);
+      } else if (currentFlow === 'bankRegression') {
+        // Bank Regression akışı için spesifik terminal kelimeler
+        return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|final.*rapor|report.*final|all.*banks.*tested|tüm.*bankalar.*test/i.test(content);
       } else {
         // Payment akışı için genel terminal kelimeler
         return /payment.*success|ödeme.*başar|işlem.*tamamlan|final.*rapor|tamamlan/i.test(content);
@@ -852,16 +855,30 @@ export default function TestResults() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-base-100 mb-2">
-              Test Sonuçları
+              {currentFlow === 'bankRegression' ? (
+                <>
+                  <i className="fas fa-university mr-2"></i>
+                  Banka Regresyon Test Sonuçları
+                </>
+              ) : (
+                'Test Sonuçları'
+              )}
             </h1>
             <div className="text-sm text-base-400 break-all sm:break-normal">
               Run Key: <code className="rounded bg-base-800 px-1 text-base-100">{runKey}</code>
+              {currentFlow === 'bankRegression' && lastWizardData && (
+                <div className="mt-1">
+                  <span className="text-orange-400">
+                    {lastWizardData.selectedBanks?.length} banka • {lastWizardData.scenario} • {lastWizardData.environment}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button 
               className="btn btn-outline btn-sm" 
-              onClick={() => navigate('/kanal-kontrol-botu')}
+              onClick={() => navigate(currentFlow === 'bankRegression' ? '/banka-regression-botu' : '/kanal-kontrol-botu')}
             >
               Dashboard'a Dön
             </button>

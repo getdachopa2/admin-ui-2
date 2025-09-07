@@ -24,7 +24,7 @@ interface TestSummary {
 interface TestSummaryReportProps {
   steps: TestStep[];
   testSummary?: TestSummary;
-  currentFlow: 'payment' | 'cancelRefund';
+  currentFlow: 'payment' | 'cancelRefund' | 'bankRegression';
   isCompleted: boolean;
 }
 

@@ -1,0 +1,359 @@
+{
+  "name": "BANKA_REGRESYON_AKISI",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "/banka-regresyon",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "webhook-node",
+      "name": "Start Regression",
+      "webhookId": "regression-webhook-id",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "auth-id",
+          "name": "Regression Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map bank names to codes\nconst bankNameToCode = {\n  'AKBANK': '046',\n  'DENIZBANK': '134',\n  'GARANTI': '062'\n};\n\nconst banks = ($json.banks || []).map(bank => bankNameToCode[bank] || bank);\nconst environment = $json.environment || 'stb';\nconst scenario = $json.scenario || 'default';\nconst manualCards = $json.manualCards || [];\n\n// Validate input\nif (!banks.length) {\n  throw new Error('No banks selected. Please provide a \"banks\" array with at least one bank.');\n}\n\nreturn [{ json: { banks, environment, scenario, manualCards } }];",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "parse-input-node",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Split banks into individual workflows\nconst banks = $json.banks;\nreturn banks.map(bank => ({ json: { ...$json, bank } }));"
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "split-banks-node",
+      "name": "Split Banks"
+    },
+    {
+      "parameters": {
+        "workflowId": "PAYMENT_PROGRESSING",
+        "input": "={{ $json }}"
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        600,
+        -100
+      ],
+      "id": "payment-workflow-node",
+      "name": "Trigger Payment Workflow"
+    },
+    {
+      "parameters": {
+        "workflowId": "CANCEL_REFUND",
+        "input": "={{ $json }}"
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        600,
+        100
+      ],
+      "id": "cancel-refund-workflow-node",
+      "name": "Trigger Cancel/Refund Workflow"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Collect all results\nconst results = $input.all().map(i => i.json);\nreturn [{ json: { results } }];"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "merge-results-node",
+      "name": "Merge Results"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.results }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "respond-node",
+      "name": "Respond with Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge channel and card data\nconst channelData = $input.all().filter(item => item.json.channel_id);\nconst cardData = $input.all().filter(item => item.json.ccno);\n\nif (!channelData.length || !cardData.length) {\n  throw new Error('Missing channel or card data. Ensure both inputs are connected and provide valid data.');\n}\n\nreturn channelData.concat(cardData).map(item => ({ json: item.json }));",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "fetch-channel-cards-node",
+      "name": "Fetch Channel and Cards"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT channel_id FROM app.bank_channels WHERE bank_code IN ({{ $json.banks.map(bank => `'${bank}'`).join(', ') }});",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        300,
+        -100
+      ],
+      "id": "fetch-channel-node",
+      "name": "Fetch Channel",
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials-id",
+          "name": "Postgres Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT ccno, e_month, e_year, cvv, bank_code FROM app.test_cards WHERE bank_code IN ({{ $json.banks.map(bank => `'${bank}'`).join(', ') }});",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        300,
+        100
+      ],
+      "id": "fetch-cards-node",
+      "name": "Fetch Cards",
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials-id",
+          "name": "Postgres Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT bc.bank_code, bc.channel_id, bc.application_id, a.application_name, a.application_password, a.secure_code, a.user_id AS app_user_id, a.user_name AS app_user_name, a.transaction_id, a.transaction_datetime, p.segment, p.user_id AS p_user_id, p.user_name AS p_user_name, p.payment_type, p.three_d_operation, p.installment_number, p.include_msisdn_in_order_id, p.check_cbbl_for_msisdn, p.check_cbbl_for_card, p.check_fraud_status, p.amount, p.msisdn FROM app.bank_channels bc JOIN app.applications a ON a.id = bc.application_id AND a.env = bc.env JOIN app.parameters_genel p ON p.env = bc.env AND ($3::int IS NULL OR p.id = $3::int) WHERE bc.env = $1 AND bc.active = TRUE AND ($2::jsonb = '[]'::jsonb OR lpad(bc.bank_code::text, 3, '0') IN (SELECT jsonb_array_elements_text($2::jsonb))) ORDER BY bc.bank_code;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        100,
+        0
+      ],
+      "id": "fetch-dynamic-params-node",
+      "name": "Fetch Dynamic Parameters",
+      "credentials": {
+        "postgres": {
+          "id": "postgres-credentials-id",
+          "name": "Postgres Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\nconst payloads = rows.map(row => ({\n  env: row.env,\n  channelId: row.channel_id,\n  segment: row.segment,\n  userId: row.p_user_id,\n  userName: row.p_user_name,\n  cardSelectionMode: 'automatic',\n  application: {\n    applicationName: row.application_name,\n    applicationPassword: row.application_password,\n    secureCode: row.secure_code,\n    transactionId: row.transaction_id,\n    transactionDateTime: row.transaction_datetime\n  },\n  payment: {\n    paymentType: row.payment_type,\n    threeDOperation: row.three_d_operation,\n    installmentNumber: row.installment_number,\n    options: {\n      includeMsisdnInOrderID: row.include_msisdn_in_order_id,\n      checkCBBLForMsisdn: row.check_cbbl_for_msisdn,\n      checkCBBLForCard: row.check_cbbl_for_card,\n      checkFraudStatus: row.check_fraud_status\n    }\n  },\n  products: [{\n    amount: row.amount,\n    msisdn: row.msisdn\n  }],\n  scenario: 'all'\n}));\nreturn payloads.map(payload => ({ json: payload }));",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "construct-payment-payload-node",
+      "name": "Construct Payment Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $input.all().map(item => item.json);\nreturn [{ json: { events } }];",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "id": "read-events-node",
+      "name": "Read Events"
+    }
+  ],
+  "connections": {
+    "Start Regression": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Channel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Channel": {
+      "main": [
+        [
+          {
+            "node": "Fetch Channel and Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Cards": {
+      "main": [
+        [
+          {
+            "node": "Fetch Channel and Cards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Channel and Cards": {
+      "main": [
+        [
+          {
+            "node": "Split Banks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Banks": {
+      "main": [
+        [
+          {
+            "node": "Trigger Payment Workflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Trigger Cancel/Refund Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Payment Workflow": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Cancel/Refund Workflow": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Respond with Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Dynamic Parameters": {
+      "main": [
+        [
+          {
+            "node": "Construct Payment Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construct Payment Payload": {
+      "main": [
+        [
+          {
+            "node": "Read Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "new-regression-workflow",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "BANKA_REGRESYON_AKISI",
+  "tags": []
+}

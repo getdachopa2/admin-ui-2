@@ -9,6 +9,7 @@ export default function Shell() {
         <nav className="grid gap-1">
           <Nav to="/">Dashboard</Nav>
           <Nav to="/kanal-kontrol-botu">Kanal Kontrol Botu</Nav>
+          <Nav to="/banka-regression-botu">Banka Regresyon Botu</Nav>
           <Nav to="/kart-durum-raporu">Kart Durum Raporu</Nav>
           <Nav to="/parametre-durum-kontrol">Parametre Durum Kontrol</Nav>
           
