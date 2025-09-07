@@ -5,9 +5,12 @@ import { IndeterminateBar, SolidProgress } from "@/components/ProgressBar";
 import { useProgress } from "@/hooks/useProgress";
 import LiveSteps from "@/components/LiveSteps";
 import TestSummaryReport from "@/components/TestSummaryReport";
+import BankRegressionReport from "@/components/BankRegressionReport";
 import { saveRun, type SavedRun } from "@/lib/runsStore";
 
 export default function TestResults() {
+  console.log('[TestResults] Component is rendering...');
+  
   const SAVE_LOCAL = import.meta.env.VITE_SAVE_LOCAL_RUNS === "true";
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -48,6 +51,36 @@ export default function TestResults() {
     onPaymentSuccess: handlePaymentSuccess
   });
 
+  // Debug logging
+  console.log('[TestResults] Current state:', {
+    runKey,
+    currentFlow,
+    prog,
+    progErr,
+    isCompleted: prog?.status === 'completed',
+    stepsLength: prog?.steps?.length || 0,
+    lastStep: prog?.steps?.[prog?.steps.length - 1],
+    status: prog?.status
+  });
+
+  // TEMPORARY: Test data for debugging
+  if (currentFlow === 'bankRegression' && (!prog || !prog.steps || prog.steps.length === 0)) {
+    console.log('[TestResults] No real data, using test data for debugging');
+    const testProg = {
+      status: 'running' as const,
+      steps: [
+        { name: 'start', message: 'Starting bank regression test', status: 'success' },
+        { name: 'akbank-token', message: 'Akbank token alma', status: 'success' },
+        { name: 'akbank-payment', message: 'Akbank ödeme', status: 'success' },
+        { name: 'denizbank-token', message: 'Denizbank token alma', status: 'running' }
+      ]
+    };
+    
+    console.log('[TestResults] Using test data:', testProg);
+    // Fake the prog data for testing
+    // prog = testProg; // Can't reassign const, but we can log for now
+  }
+
   const running = prog?.status === "running";
   const progressSteps = prog?.steps ?? [];
 
@@ -67,8 +100,9 @@ export default function TestResults() {
         // Cancel/Refund akışı için spesifik terminal kelimeler
         return /cancel.*success|iptal.*başar|refund.*success|iade.*başar|işlem.*tamamlan|final.*rapor/i.test(content);
       } else if (currentFlow === 'bankRegression') {
-        // Bank Regression akışı için spesifik terminal kelimeler
-        return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|test.*tamamlandı|final.*rapor|report.*final|all.*banks.*tested|tüm.*bankalar.*test|done/i.test(content);
+        // Bank Regression akışı için çok spesifik terminal kelimeler + minimum step kontrolü
+        if (progressSteps.length < 10) return false; // Minimum işlem sayısı
+        return /regresyon.*tamamlan|bank.*regression.*complete|banka.*test.*tamamlan|test.*sonuçları.*hazır|all.*banks.*completed|final.*regression.*report/i.test(content);
       } else {
         // Payment akışı için genel terminal kelimeler
         return /payment.*success|ödeme.*başar|işlem.*tamamlan|final.*rapor|tamamlan/i.test(content);
@@ -959,7 +993,15 @@ export default function TestResults() {
       </div>
 
       {/* Detaylı Test Raporu - Sadece test tamamlandığında */}
-      {isCompleted && (
+      {isCompleted && currentFlow === 'bankRegression' && (
+        <BankRegressionReport 
+          steps={listSteps}
+          isCompleted={isCompleted}
+        />
+      )}
+
+      {/* Normal Test Raporu - Payment/Cancel-Refund akışları için */}
+      {isCompleted && currentFlow !== 'bankRegression' && (
         <TestSummaryReport 
           steps={listSteps}
           testSummary={lastWizardData ? {

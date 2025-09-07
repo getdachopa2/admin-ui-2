@@ -17,10 +17,16 @@ const looksTerminal = (steps: RunStep[], flow: string) => {
     const stepMessage = (step?.message ?? '').toLowerCase();
     const txt = `${stepName} ${stepMessage}`;
     
-    // "Done" adımını direkt kontrol et
+    // "Done" adımını flow'a göre kontrol et
     if (stepName === 'done' || stepMessage === 'done' || /^done$/i.test(stepName)) {
-      console.log('[useProgress] Terminal detected: Done step found', step);
-      return true;
+      // Bank regression için daha spesifik kontrol
+      if (flow === 'bankRegression') {
+        // "Done" step'inde regresyon tamamlanma mesajı var mı?
+        return /test.*tamamland|regresyon.*tamamlan|all.*complete|başarılı.*oldu|sonuçları.*hazır/i.test(txt);
+      } else {
+        console.log('[useProgress] Terminal detected: Done step found', step);
+        return true;
+      }
     }
     
     // "Test tamamlandı" mesajlarını kontrol et  
@@ -40,7 +46,24 @@ const looksTerminal = (steps: RunStep[], flow: string) => {
   
   // Bank Regression akışları için terminal koşulları
   if (flow === 'bankRegression') {
-    return /regression.*complete|bank.*test.*complete|regresyon.*tamamlan|banka.*test.*tamamlan|test.*tamamlandı|final.*rapor|report.*final|done/i.test(txt);
+    // Minimum 30 step olmalı (en az 6-7 kanal için işlemler)
+    if (steps.length < 30) return false;
+    
+    // "Done" step'i olmalı
+    const isDoneStep = /^done$/i.test(last?.name ?? '');
+    if (!isDoneStep) return false;
+    
+    // En az 6 farklı banka/kanal için token işlemi olmalı (çeşitlilik kontrolü)
+    const tokenSteps = steps.filter(step => 
+      /token.*sonuç|hash.*success/i.test(`${step.name || ''} ${step.message || ''}`)
+    );
+    
+    console.log('[useProgress] Terminal check - Token steps count:', tokenSteps.length);
+    console.log('[useProgress] Terminal check - Total steps:', steps.length);
+    console.log('[useProgress] Terminal check - Is Done step:', isDoneStep);
+    
+    // En az 6 token işlemi (6 farklı kanal) ve Done step'i olmalı
+    return tokenSteps.length >= 6 && isDoneStep;
   }
   
   // Payment akışları için daha geniş terminal kontrol
@@ -298,8 +321,8 @@ export function useProgress(
 
             return {
               status: terminal
-                ? (res?.status ?? 'completed')
-                : (res?.status ?? prev?.status ?? 'running'),
+                ? 'completed'
+                : 'running', // n8n API status'unu yok sayıyoruz, kendi logic'imizi kullanıyoruz
               startTime: prev?.startTime,
               endTime: terminal
                 ? (res?.endTime ?? new Date().toISOString())

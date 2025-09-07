@@ -282,7 +282,7 @@ export default function Dashboard() {
       {/* Metrik kartları */}
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard 
-          title="Son 24 Saat" 
+          title="Bugünkü Koşular" 
           value={metrics.todayRuns.toString()} 
           change={calculateChange(metrics.todayRuns, metrics.yesterdayRuns)} 
         />
@@ -423,9 +423,9 @@ function RecentTransactions({
   if (transactions.length === 0) {
     return (
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - Ödemeler</h2>
+        <h2 className="mb-4 text-lg font-semibold">Son 5 Ödeme</h2>
         <div className="text-center text-sm text-neutral-400 py-8">
-          Son 24 saatte ödeme işlemi yapılmamış
+          Bugün henüz ödeme işlemi yapılmamış
         </div>
       </div>
     );
@@ -433,7 +433,7 @@ function RecentTransactions({
 
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-      <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - Ödemeler</h2>
+      <h2 className="mb-4 text-lg font-semibold">Son 5 Ödeme</h2>
       <div className="space-y-3">
         {transactions.map((payment) => (
           <div 
@@ -475,9 +475,9 @@ function RecentCancellations({
   if (cancellations.length === 0) {
     return (
       <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - İptal/İade</h2>
+        <h2 className="mb-4 text-lg font-semibold">Son 5 İptal/İade</h2>
         <div className="text-center text-sm text-neutral-400 py-8">
-          Son 24 saatte iptal/iade işlemi yapılmamış
+          Bugün henüz iptal/iade işlemi yapılmamış
         </div>
       </div>
     );
@@ -485,7 +485,7 @@ function RecentCancellations({
 
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-6">
-      <h2 className="mb-4 text-lg font-semibold">Son 24 Saat - İptal/İade</h2>
+      <h2 className="mb-4 text-lg font-semibold">Son 5 İptal/İade</h2>
       <div className="space-y-3">
         {cancellations.map((cancellation) => (
           <div 

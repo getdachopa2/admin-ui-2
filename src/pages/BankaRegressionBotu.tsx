@@ -246,15 +246,26 @@ export default function BankaRegressionBotu() {
       // Response'dan runKey al (My workflow 9'dan dönen format) - API'den döndüğü şekliyle kullan
       const runKey = res.runKey || res.run_key || (res.data && res.data.runKey) || (res.data && res.data.run_key);
       
+      console.log('🔍 RunKey detection:', {
+        'res.runKey': res.runKey,
+        'res.run_key': res.run_key,
+        'res.data?.runKey': res.data?.runKey,
+        'res.data?.run_key': res.data?.run_key,
+        'final runKey': runKey,
+        'response type': typeof res,
+        'response keys': Object.keys(res)
+      });
+      
       if (!runKey) {
         console.error('runKey bulunamadı! Response object:', JSON.stringify(res, null, 2));
-        console.warn('n8n workflow\'u düzeltilene kadar execution ID kullanılıyor...');
+        console.warn('n8n workflow HTTP Response node eksik - geçici execution ID kullanılıyor');
         
         // n8n execution başladı ama response döndürmedi
-        // Execution ID'yi manuel oluştur (gerçek n8n pattern'i)
-        const executionId = Date.now().toString();
-        const tempRunKey = `reg-${executionId}`;
-        console.log('Using execution-based runKey:', tempRunKey);
+        // Gerçek execution pattern'i oluştur
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const tempRunKey = `reg-${timestamp}-${randomSuffix}`;
+        console.log('⚠️ Using fallback runKey (n8n response eksik):', tempRunKey);
         
         // Session storage'a kaydet
         sessionStorage.setItem('bankRegression_runKey', tempRunKey);
