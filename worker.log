@@ -1,0 +1,427 @@
+[2025-10-05T22:32:30.103Z] Simple 3D Worker listening on http://localhost:3002
+[2025-10-05T22:32:30.106Z] Also available on http://127.0.0.1:3002
+[2025-10-05T22:32:30.107Z] Ready to handle sessionID-based 3D flows
+[2025-10-05T22:33:04.226Z] Received 3D simulation request: {
+  "threeDSessionId": "1baa504d-760f-4054-959a-33510f7300d2",
+  "cardnumber": "4355093000777068",
+  "cardexpiredatemonth": "06",
+  "cardexpiredateyear": "27",
+  "cardCVV": "941",
+  "amount": "10.2",
+  "cardholdername": "Kezban Mahmut",
+  "otp": "123456",
+  "pin": "6ABADB8E1DD74DD0AFF5",
+  "userCode": "20099"
+}
+[2025-10-05T22:33:04.229Z] Starting 3D automation...
+[2025-10-05T22:33:04.850Z] Making 3D API call with sessionId: 1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:16.861Z] Form submitted to 3D API, waiting for bank page...
+[2025-10-05T22:33:16.863Z] Page content before navigation: <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Title</title><script type="text/javascript" src="/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js" data-dtconfig="app=ea7c4b59f27d43eb|owasp=1|featureHash=ICA7NVfqrux|rdnt=1|uxrgce=1|cuc=ajjcyy1k|mel=100000|expw=1|dpvc=1|lastModification=1755074537482|postfix=ajjcyy1k|tp=500,50,0|srbbv=2|agentUri=/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js|reportUrl=/tds/rb_a735c795-fdef-4844-8e76-f207326752e1|rid=RID_-924260837|rpid=277456504|domain=bkmtest.com.tr"></script><script>window.onload = function onloadFunction() {setTimeout(function(){ document.tds_server_form.submit(); },1);}</script></head><body><form name="tds_server_form" action="https://emvacs-preprod.bkmtest.com.tr/acs/creq" method="post"><input type="hidden" name="creq" value="ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiOWFhZTZkNTAtMDkyZi00NTU0LWFjZjMtZWZiOTkxYTBjODYwIiwKICAiYWNzVHJhbnNJRCIgOiAiOGE1ZWNmY2ItYjc1YS00M2MxLTgzOWMtZmM1NTNmZWY4ODljIiwKICAibWVzc2FnZVZlcnNpb24iIDogIjIuMi4wIiwKICAibWVzc2FnZVR5cGUiIDogIkNSZXEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNSIKfQ"></form></body></html>
+[2025-10-05T22:33:16.864Z] Navigation attempt 1/3
+[2025-10-05T22:33:16.946Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:33:16.947Z] Response status: 200
+[2025-10-05T22:33:16.948Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab2000b13bb53df26197b0b3dd5b1f75942089ed26b10da49044dded842f3a730f333b0858dcde111130000d6020a4da2f70594db43d6a73b3915e066d1046312d88b8abbb67f9c2678046313c591f1508fc4f2753a324bd11bdff; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.418Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:33:18.419Z] Response status: 200
+[2025-10-05T22:33:18.420Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=utf-8","date":"Sun, 05 Oct 2025 22:33:17 GMT","keep-alive":"timeout=5, max=100","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-243583760\", dtTao;desc=\"1\"","set-cookie":"TS014a6af2=0106526e74ddf73f3a41d892e47bc153c1de2462b3510ae80524cf890f4c51ba01436e557ac24d66480acfabd46e2751b3f00ea7be; Path=/; Domain=.emvacs-preprod.bkmtest.com.tr\nTS46964ee8027=089c8d225bab2000602b2fd0109ec39564cc9118f6c23b9d96eee348f907d15babcf117d9e9e778408d0c7a9701130009d111d2b4fc146f12617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","vary":"Origin,Access-Control-Request-Method,Access-Control-Request-Headers","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.480Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:33:18.481Z] Response status: 200
+[2025-10-05T22:33:18.481Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"566","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS46964ee8027=089c8d225bab20008bff1193c64f8878418e229bb2c9c546c07cbaf01fe5ff4fb26f928f5105b293080984796511300038fb8a42acd4beda2617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.555Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_visa.png
+[2025-10-05T22:33:18.556Z] Response status: 200
+[2025-10-05T22:33:18.556Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"6039","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"1797-5a6257dcad980\"","keep-alive":"timeout=5, max=100","last-modified":"Thu, 21 May 2020 09:53:58 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"596066264\"","set-cookie":"TS46964ee8027=089c8d225bab2000d9042c7395d818d34a1b23fea14e70852ec2fb66fc5c7d183fa2904ec3b4160908259c3b701130001d6abeaaea7733552617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.558Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/main-dist.css
+[2025-10-05T22:33:18.558Z] Response status: 200
+[2025-10-05T22:33:18.559Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"12745","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/css","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"31c9-5adc95f1819c0\"","keep-alive":"timeout=5, max=100","last-modified":"Wed, 26 Aug 2020 15:21:19 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1292406759\"","set-cookie":"TS46964ee8027=089c8d225bab2000f1a51bc42af92c3c442a3432a17346fcfbb37454812ed24a3f1b111aefbb24db08b8840e33113000eb9b816dedb6b7542617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.561Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_bkm.png
+[2025-10-05T22:33:18.562Z] Response status: 200
+[2025-10-05T22:33:18.562Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"10043","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"273b-611b5e0a61f00\"","keep-alive":"timeout=5, max=100","last-modified":"Mon, 19 Feb 2024 06:05:16 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1423195015\"","set-cookie":"TS46964ee8027=089c8d225bab20008fe19d83b0a0920e5d6f81c28afe4409f860bf01bff66f9d951890b06c0b7b2508d848aeaa113000a33156ce7ea6db072617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.594Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/bkmacs-dist.js
+[2025-10-05T22:33:18.594Z] Response status: 200
+[2025-10-05T22:33:18.595Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"615","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"application/javascript","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"267-5adc963ec1000\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1718828520\"","set-cookie":"TS46964ee8027=089c8d225bab20004c499fef49832d3d955f4645cabc5ba590d0b47a597b06cd33ccac747e6bd89d08c880d9fa11300065969641564dd9622617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.632Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/bkmacs2-dist.css
+[2025-10-05T22:33:18.632Z] Response status: 200
+[2025-10-05T22:33:18.633Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"35382","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/css","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"8a36-6236589277f00\"","keep-alive":"timeout=5, max=100","last-modified":"Tue, 01 Oct 2024 07:47:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1520265809\"","set-cookie":"TS46964ee8027=089c8d225bab20009ca091ee4ac4ff5578b1349b8e6d82ac16b23c0817489b81f8dadac20444943a08e30e9f671130004adec8a64536079b2617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.732Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/main-dist.js
+[2025-10-05T22:33:18.733Z] Response status: 200
+[2025-10-05T22:33:18.733Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"158198","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"application/javascript","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"269f6-5adc963ec1000\"","keep-alive":"timeout=5, max=100","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"696522862\"","set-cookie":"TS46964ee8027=089c8d225bab20001bd1313df9dfee3130a4a1d7f045dcc1dbc62d483f351785a8eda28cd0815acf08c468645511300045bb1ec5ac8b3e752617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.841Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_0_0.woff2
+[2025-10-05T22:33:18.842Z] Response status: 200
+[2025-10-05T22:33:18.842Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"34425","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/woff2","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"8679-5adc9614cad00:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1993091912\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab20005101799c27f3d9a007a1206eb5090c0711c7e305447f56df989d153163fc8c0008cbc4b4d4113000018c8904d36a1f9b2617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.880Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_1_0.woff2
+[2025-10-05T22:33:18.881Z] Response status: 200
+[2025-10-05T22:33:18.882Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"36653","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/woff2","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"8f2d-5adc9614cad00:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-201521391\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab200092ea7bfffaea79c80634e5005915e56d1668489cfa9a852abe1cbed51d966b7608ec92015a1130001b4040e0405394bb2617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.954Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/password.ttf
+[2025-10-05T22:33:18.956Z] Response status: 200
+[2025-10-05T22:33:18.958Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"127740","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/ttf","date":"Sun, 05 Oct 2025 22:33:19 GMT","etag":"\"1f2fc-5adc9615bef40:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=98","last-modified":"Wed, 26 Aug 2020 15:21:56 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1848515609\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab2000c424bd586d26e5a2d50aeab691fb3db6cb5c5e170b5a4491ac106488f3f4593008368a41ea113000f84b4ea06e52e0c12617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:18.991Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:33:18.991Z] Response status: 404
+[2025-10-05T22:33:18.992Z] Response headers: {"connection":"Keep-Alive","content-length":"196","content-type":"text/html; charset=iso-8859-1","date":"Sun, 05 Oct 2025 22:33:19 GMT","keep-alive":"timeout=5, max=97","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"357557897\"","set-cookie":"TS46964ee8027=089c8d225bab2000b47542de9c7c4d3568aeca97f2f4046dc969beed39ceacda0372be02052b2c82088b3d1057113000ff0a50b4ba704f392617cca82d8c55ded84a3bd4a4ca1f820a42fb2eaa55a13b146c6061b2bd9918577301f9bb8a73ed; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains"}
+[2025-10-05T22:33:19.435Z] Bank page loaded: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:33:21.452Z] Page content extracted successfully
+[2025-10-05T22:33:21.452Z] Page content length: 13950
+[2025-10-05T22:33:21.453Z] Page content preview: <!DOCTYPE html><html lang="tr" style="height: 100%; width: 100%;"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <script type="text/javascript" src="/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js" data-dtconfig="app=ea7c4b59f27d43eb|owasp=1|featureHash=ICA7NVfqrux|rdnt=1|uxrgce=1|cuc=ajjcyy1k|mel=100000|expw=1|dpvc=1|lastModification=1755074537482|postfix=ajjcyy1k|tp=500,50,0|srbbv=2|agentUri=/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js|reportUrl=/acs/rb_a735c795-fdef-4844-8e76-f207326752e1|rid=RID_1288111993|rpid=-243583760|domain=bkmtest.com.tr"></script><link rel="apple-touch-icon" type="image/png" href="https://em...
+[2025-10-05T22:33:21.453Z] Page title: BKM ACS
+[2025-10-05T22:33:21.453Z] Page URL: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:33:21.455Z] All inputs found: [
+  {
+    "type": "password",
+    "name": "fakePasswordRemembered",
+    "id": "fakePasswordRemembered",
+    "placeholder": "",
+    "className": "",
+    "value": ""
+  },
+  {
+    "type": "text",
+    "name": "otpCode",
+    "id": "passwordfield",
+    "placeholder": "",
+    "className": "f-input",
+    "value": ""
+  },
+  {
+    "type": "checkbox",
+    "name": "",
+    "id": "toggle-1",
+    "placeholder": "",
+    "className": "popup txt-link trigger-absolute-panel",
+    "value": "on"
+  },
+  {
+    "type": "hidden",
+    "name": "acsTransactionId",
+    "id": "",
+    "placeholder": "",
+    "className": "",
+    "value": "8a5ecfcb-b75a-43c1-839c-fc553fef889c"
+  }
+]
+[2025-10-05T22:33:21.456Z] All buttons found: [
+  {
+    "type": "button",
+    "name": "otpType",
+    "id": "retryButton",
+    "className": "button btn-1 re-code v1",
+    "textContent": "Doğrulama Kodunu Yeniden Gönder",
+    "value": "retry"
+  },
+  {
+    "type": "submit",
+    "name": "otpType",
+    "id": "submitbutton",
+    "className": "button btn-1 btn-commit",
+    "textContent": "Onayla",
+    "value": "confirm"
+  },
+  {
+    "type": "submit",
+    "name": "cancel",
+    "id": "triggercancel",
+    "className": "",
+    "textContent": "",
+    "value": "cancel"
+  }
+]
+[2025-10-05T22:33:21.457Z] Searching for OTP input with 36 selectors...
+[2025-10-05T22:33:21.472Z] Found visible OTP input: #passwordfield
+[2025-10-05T22:33:21.473Z] Filling OTP: 123456
+[2025-10-05T22:33:22.504Z] Searching for submit button with 32 selectors...
+[2025-10-05T22:33:22.511Z] Found visible submit button: #submitbutton
+[2025-10-05T22:33:22.511Z] Clicking submit button...
+[2025-10-05T22:33:22.545Z] Waiting for response...
+[2025-10-05T22:33:24.987Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:33:24.987Z] Response status: 200
+[2025-10-05T22:33:24.988Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=utf-8","date":"Sun, 05 Oct 2025 22:33:23 GMT","keep-alive":"timeout=5, max=100","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"552796702\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab20005a00cf28805c82e9b3dd017a000ace9683357859cc13ac17726945fef9d769250897d72038113000e2a31aeea07908839ae8e81a81bcd746d3d395110af6a8df5cfb0a8e0b8eb682a3b47edf9c9e966504a6240b4a801d4d; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:25.000Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/bkmacs2-dist.css
+[2025-10-05T22:33:25.000Z] Response status: 200
+[2025-10-05T22:33:25.001Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"8a36-6236589277f00\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1520265809\"","content-length":"35382","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Tue, 01 Oct 2024 07:47:40 GMT","content-type":"text/css"}
+[2025-10-05T22:33:25.002Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/main-dist.css
+[2025-10-05T22:33:25.003Z] Response status: 200
+[2025-10-05T22:33:25.003Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"31c9-5adc95f1819c0\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1292406759\"","content-length":"12745","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:19 GMT","content-type":"text/css"}
+[2025-10-05T22:33:25.005Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/main-dist.js
+[2025-10-05T22:33:25.005Z] Response status: 200
+[2025-10-05T22:33:25.006Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"269f6-5adc963ec1000\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"696522862\"","content-length":"158198","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","content-type":"application/javascript"}
+[2025-10-05T22:33:25.008Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_visa.png
+[2025-10-05T22:33:25.008Z] Response status: 200
+[2025-10-05T22:33:25.009Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"1797-5a6257dcad980\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"596066264\"","content-length":"6039","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Thu, 21 May 2020 09:53:58 GMT","content-type":"image/png"}
+[2025-10-05T22:33:25.011Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_bkm.png
+[2025-10-05T22:33:25.011Z] Response status: 200
+[2025-10-05T22:33:25.012Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"273b-611b5e0a61f00\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1423195015\"","content-length":"10043","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Mon, 19 Feb 2024 06:05:16 GMT","content-type":"image/png"}
+[2025-10-05T22:33:25.013Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/bkmacs-dist.js
+[2025-10-05T22:33:25.014Z] Response status: 200
+[2025-10-05T22:33:25.015Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"267-5adc963ec1000\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1718828520\"","content-length":"615","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","content-type":"application/javascript"}
+[2025-10-05T22:33:25.026Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:33:25.026Z] Response status: 200
+[2025-10-05T22:33:25.027Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"566","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS46964ee8027=089c8d225bab2000145b549590b9d331c5dd433ff685af9b6ba52e73a7e15055f028d6e7a80d2f6f08034d895a113000ad8d26fc54a8f86a9ae8e81a81bcd746d3d395110af6a8df5cfb0a8e0b8eb682a3b47edf9c9e966504a6240b4a801d4d; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:25.036Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/password.ttf
+[2025-10-05T22:33:25.037Z] Response status: 200
+[2025-10-05T22:33:25.038Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"1f2fc-5adc9615bef40:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1848515609\", dtTao;desc=\"1\"","content-length":"127740","keep-alive":"timeout=5, max=98","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:56 GMT","content-type":"font/ttf"}
+[2025-10-05T22:33:25.040Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_0_0.woff2
+[2025-10-05T22:33:25.041Z] Response status: 200
+[2025-10-05T22:33:25.042Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"8679-5adc9614cad00:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1993091912\", dtTao;desc=\"1\"","content-length":"34425","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","content-type":"font/woff2"}
+[2025-10-05T22:33:25.043Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_1_0.woff2
+[2025-10-05T22:33:25.044Z] Response status: 200
+[2025-10-05T22:33:25.044Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"8f2d-5adc9614cad00:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-201521391\", dtTao;desc=\"1\"","content-length":"36653","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:33:19 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","content-type":"font/woff2"}
+[2025-10-05T22:33:25.150Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/img/check.png
+[2025-10-05T22:33:25.151Z] Response status: 200
+[2025-10-05T22:33:25.151Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"20334","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:33:25 GMT","etag":"\"4f6e-5855540f3ff00\"","keep-alive":"timeout=5, max=100","last-modified":"Sat, 30 Mar 2019 20:01:32 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-124887465\"","set-cookie":"TS46964ee8027=089c8d225bab200086918206d2c90f9d41361cbe5867284a915fb49ad1d273fa991bb01e27e754b508210338e91130001bc3d70181ebbf0d9ae8e81a81bcd746d3d395110af6a8df5cfb0a8e0b8eb682a3b47edf9c9e966504a6240b4a801d4d; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:25.564Z] Navigation completed to: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:33:25.566Z] Page content after submit: Doğrulama Başarılı...
+[2025-10-05T22:33:25.567Z] Success detected from content
+[2025-10-05T22:33:25.568Z] Starting 3DS finalize process...
+[2025-10-05T22:33:25.568Z] [3DS] Starting finalize process...
+[2025-10-05T22:33:25.569Z] [3DS] Waiting for automatic redirect to merchant...
+[2025-10-05T22:33:28.245Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/tds/challenge
+[2025-10-05T22:33:28.246Z] Response status: 200
+[2025-10-05T22:33:28.247Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=UTF-8","date":"Sun, 05 Oct 2025 22:33:28 GMT","keep-alive":"timeout=5, max=100","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1911869924\", dtTao;desc=\"1\"","set-cookie":"TS6d45e941027=089c8d225bab20006a4f9f04c2a9239c90323dbeebe8871b2f6c75bc04edafb6c0c83851a10a0673082d0ac084113000b1929fee7b405256dce1b27bcaac08efa024254e0bd730be0a886dcb2ae2044c56c9924bbb203e60d5a535d7e402a412; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","vary":"Origin,Access-Control-Request-Method,Access-Control-Request-Headers","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:28.292Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:33:28.293Z] Response status: 200
+[2025-10-05T22:33:28.293Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab2000820bd27000ea6f7c0b4dc37e335e4d04a0b03accb12431229861854b388ae9cb0869bc850a11300076340c8bf136b234dce1b27bcaac08efa024254e0bd730be0a886dcb2ae2044c56c9924bbb203e60d5a535d7e402a412; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:28.435Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:33:28.435Z] Response status: 200
+[2025-10-05T22:33:28.436Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab2000758644c4debbef273990c82d040aa7b99cccd6fbe8023009dd560154bda5a44c0889bf2f8a113000e19849aa1e327790dce1b27bcaac08efa024254e0bd730be0a886dcb2ae2044c56c9924bbb203e60d5a535d7e402a412; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:33:29.514Z] [3DS] Navigation completed to: https://emvtds-preprod.bkmtest.com.tr/tds/challenge
+[2025-10-05T22:33:29.515Z] [3DS] Forcing navigation to okUrl: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:29.539Z] [3DS] POST navigation failed, trying GET: Execution context was destroyed, most likely because of a navigation.
+[2025-10-05T22:33:29.663Z] Response received from: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:29.664Z] Response status: 405
+[2025-10-05T22:33:29.666Z] Response headers: {"connection":"Keep-Alive","date":"Sun, 05 Oct 2025 22:33:30 GMT","keep-alive":"timeout=15, max=200","set-cookie":"dtCookie=v_4_srv_1_sn_FAA3E75DE1E4FFF50D9D2DC5D665509A_perc_100000_ol_0_mul_1_app-3Aea7c4b59f27d43eb_0_rcs-3Acss_0; Path=/; Domain=.turkcell.tgc","x-content-type-options":"nosniff","access-control-allow-headers":"*","access-control-allow-methods":"POST, GET, OPTIONS, DELETE","access-control-allow-origin":"*","access-control-max-age":"3600","allow":"POST","content-language":"tr-TR","content-length":"753","content-type":"text/html;charset=UTF-8","server-timing":"dtRpid;desc=\"-959020094\", dtSInfo;desc=\"0\"","x-oneagent-js-injection":"true"}
+[2025-10-05T22:33:29.667Z] [3DS] Detected merchant response: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:29.912Z] [3DS] Forced navigation completed to: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:29.913Z] [3DS] Successfully reached merchant result page via forced navigation
+[2025-10-05T22:33:29.913Z] 3DS finalize successful via forced-navigation: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2
+[2025-10-05T22:33:29.914Z] Automation completed. Success: true, URL: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=1baa504d-760f-4054-959a-33510f7300d2, Error: none
+[2025-10-05T22:39:51.777Z] Simple 3D Worker listening on http://localhost:3002
+[2025-10-05T22:39:51.779Z] Also available on http://127.0.0.1:3002
+[2025-10-05T22:39:51.780Z] Ready to handle sessionID-based 3D flows
+[2025-10-05T22:40:36.342Z] Received 3D simulation request: {
+  "threeDSessionId": "edfe0c6e-0cee-46ca-a8fd-8d60edc9c32a",
+  "cardnumber": "4355093000777068",
+  "cardexpiredatemonth": "06",
+  "cardexpiredateyear": "27",
+  "cardCVV": "941",
+  "amount": "10.2",
+  "cardholdername": "Kezban Mahmut",
+  "otp": "123456",
+  "pin": "6ABADB8E1DD74DD0AFF5",
+  "userCode": "20099"
+}
+[2025-10-05T22:40:36.344Z] Starting 3D automation...
+[2025-10-05T22:40:36.964Z] Making 3D API call with sessionId: edfe0c6e-0cee-46ca-a8fd-8d60edc9c32a
+[2025-10-05T22:41:41.678Z] Received 3D simulation request: {
+  "threeDSessionId": "04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1",
+  "cardnumber": "4355093000777068",
+  "cardexpiredatemonth": "06",
+  "cardexpiredateyear": "27",
+  "cardCVV": "941",
+  "amount": "10.2",
+  "cardholdername": "Kezban Mahmut",
+  "otp": "123456",
+  "pin": "6ABADB8E1DD74DD0AFF5",
+  "userCode": "20099"
+}
+[2025-10-05T22:41:41.679Z] Starting 3D automation...
+[2025-10-05T22:41:42.259Z] Making 3D API call with sessionId: 04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:41:54.770Z] Form submitted to 3D API, waiting for bank page...
+[2025-10-05T22:41:54.774Z] Page content before navigation: <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Title</title><script type="text/javascript" src="/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js" data-dtconfig="app=ea7c4b59f27d43eb|owasp=1|featureHash=ICA7NVfqrux|rdnt=1|uxrgce=1|cuc=ajjcyy1k|mel=100000|expw=1|dpvc=1|lastModification=1755074537482|postfix=ajjcyy1k|tp=500,50,0|srbbv=2|agentUri=/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js|reportUrl=/tds/rb_a735c795-fdef-4844-8e76-f207326752e1|rid=RID_-924260837|rpid=2026859501|domain=bkmtest.com.tr"></script><script>window.onload = function onloadFunction() {setTimeout(function(){ document.tds_server_form.submit(); },1);}</script></head><body><form name="tds_server_form" action="https://emvacs-preprod.bkmtest.com.tr/acs/creq" method="post"><input type="hidden" name="creq" value="ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiZDUwZjg0NzAtZGUxYi00Zjg5LTgyNTAtNmY1ZTA1NmRiZGU0IiwKICAiYWNzVHJhbnNJRCIgOiAiMDUxMGZiNjItN2VhZS00ODIwLWIyNTMtZTZlNjE1NDBjY2E3IiwKICAibWVzc2FnZVZlcnNpb24iIDogIjIuMi4wIiwKICAibWVzc2FnZVR5cGUiIDogIkNSZXEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNSIKfQ"></form></body></html>
+[2025-10-05T22:41:54.775Z] Navigation attempt 1/3
+[2025-10-05T22:41:54.911Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:41:54.912Z] Response status: 200
+[2025-10-05T22:41:54.912Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab200016a73131e5296a5b6fadcb596f5e134bf36c7a86ca53a3f9d839a1d4e21d12ff0820a6dba411300017c6e994dd22d549395e760287d8c1c8e4993effffdb9590a1e6d0c9ad3faee6f82cb727fb80222452131bcc1fb7846d; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:56.859Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:41:56.860Z] Response status: 200
+[2025-10-05T22:41:56.860Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=utf-8","date":"Sun, 05 Oct 2025 22:41:55 GMT","keep-alive":"timeout=5, max=100","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1858670437\", dtTao;desc=\"1\"","set-cookie":"TS014a6af2=0106526e742d084824aff6e206c13343d6f607823a5761ec6078306104b90757995caf13d21a899940baa4bac15781f9fb2910a899; Path=/; Domain=.emvacs-preprod.bkmtest.com.tr\nTS46964ee8027=089c8d225bab2000f5da25a28b43013e49fe3b5baea68b8eca50d89605cfab6a072e363fa12c85be08c8b85c95113000ca1c4565776eadc4c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","vary":"Origin,Access-Control-Request-Method,Access-Control-Request-Headers","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:56.943Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/bkmacs2-dist.css
+[2025-10-05T22:41:56.944Z] Response status: 200
+[2025-10-05T22:41:56.945Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"35382","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/css","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"8a36-6236589277f00\"","keep-alive":"timeout=5, max=99","last-modified":"Tue, 01 Oct 2024 07:47:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1897979372\"","set-cookie":"TS46964ee8027=089c8d225bab2000cadc115c5025f47b0f8d2af1bcad531b2f1a33f839ce72f488d5a8c7a922256308bad61a221130001083913ce96378bcc5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:56.997Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:41:57.000Z] Response status: 200
+[2025-10-05T22:41:57.004Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"566","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS46964ee8027=089c8d225bab200029dddf1b27eb9bd204d25599af1ef8a7ca88fa3c92cc81e2353b8b1e840a7c7e087d8fb179113000e88ef786fde68207c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.017Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/main-dist.css
+[2025-10-05T22:41:57.019Z] Response status: 200
+[2025-10-05T22:41:57.021Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"12745","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/css","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"31c9-5adc95f1819c0\"","keep-alive":"timeout=5, max=100","last-modified":"Wed, 26 Aug 2020 15:21:19 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1332420732\"","set-cookie":"TS46964ee8027=089c8d225bab2000f38f16c1e2cc54c5137c6743485209392da7ddf0fa61137546637ab813ec35fe0896cdae1b113000781339a949029f25c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.025Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_visa.png
+[2025-10-05T22:41:57.026Z] Response status: 200
+[2025-10-05T22:41:57.027Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"6039","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"1797-5a6257dcad980\"","keep-alive":"timeout=5, max=100","last-modified":"Thu, 21 May 2020 09:53:58 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-2024537629\"","set-cookie":"TS46964ee8027=089c8d225bab2000839b3d58ef3f04b5caa05f00faeef230c4520415ef8dbf0bce379a6a9f36ec1708c5f05888113000cb9549ea6bd04f9ec5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.030Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_bkm.png
+[2025-10-05T22:41:57.032Z] Response status: 200
+[2025-10-05T22:41:57.034Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"10043","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"273b-611b5e0a61f00\"","keep-alive":"timeout=5, max=100","last-modified":"Mon, 19 Feb 2024 06:05:16 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-20434511\"","set-cookie":"TS46964ee8027=089c8d225bab2000bbf6a34e7868d169c5213f1fbd9baea2174ef134cfb059ad6a0c60a749c612da08a39453811130001736ba5763cda740c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.075Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/bkmacs-dist.js
+[2025-10-05T22:41:57.083Z] Response status: 200
+[2025-10-05T22:41:57.085Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"615","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"application/javascript","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"267-5adc963ec1000\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-850505173\"","set-cookie":"TS46964ee8027=089c8d225bab2000e1db3b34b9015542b565ba437577a98f07d42d5339cbb631d35bdd622ad53f4a0868f2fccf1130006d94da3e644c5470c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.202Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/main-dist.js
+[2025-10-05T22:41:57.203Z] Response status: 200
+[2025-10-05T22:41:57.203Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"158198","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"application/javascript","date":"Sun, 05 Oct 2025 22:41:57 GMT","etag":"\"269f6-5adc963ec1000\"","keep-alive":"timeout=5, max=100","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1889927396\"","set-cookie":"TS46964ee8027=089c8d225bab2000482aa7e2db836f295d6ab111866cb6eacac94774a64cf546326c010281a8a19608b4c50a7311300061c1242423a60701c5a6be9365e8c9f2fdfdf9471132e95de9ca63b20837219e79a5b5d0cd48cc6bfd31d7855e7f35ca; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.312Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_0_0.woff2
+[2025-10-05T22:41:57.312Z] Response status: 200
+[2025-10-05T22:41:57.313Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"34425","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/woff2","date":"Sun, 05 Oct 2025 22:41:58 GMT","etag":"\"8679-5adc9614cad00:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-792449904\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab20003f88a131debf40f9b38c19fc7212c365f4bcd1a95d7eeb6ccd53242cf7d6c3490821313da4113000e8e7c1f90f35b532b1cd0b6a6caf1c417fbb4b9a1fd321d61b2ce627d244591ac12686f2b86f79bb35eff58ca692f92f; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.347Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_1_0.woff2
+[2025-10-05T22:41:57.349Z] Response status: 200
+[2025-10-05T22:41:57.349Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"36653","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/woff2","date":"Sun, 05 Oct 2025 22:41:58 GMT","etag":"\"8f2d-5adc9614cad00:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=98","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1821116483\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab2000c32b22755f594048d4fec53ee7e65d38326b3b7a7db20363447e6b306cf77f0108ea2d3012113000a3d671f7272977bfb1cd0b6a6caf1c417fbb4b9a1fd321d61b2ce627d244591ac12686f2b86f79bb35eff58ca692f92f; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.431Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/password.ttf
+[2025-10-05T22:41:57.432Z] Response status: 200
+[2025-10-05T22:41:57.433Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"127740","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"font/ttf","date":"Sun, 05 Oct 2025 22:41:58 GMT","etag":"\"1f2fc-5adc9615bef40:dtagent10319250807130352+jSf\"","keep-alive":"timeout=5, max=99","last-modified":"Wed, 26 Aug 2020 15:21:56 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"616215450\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab20001e83ae5828b1c517fc788962bec7eda85491fa426b096b3b9354082ea57b0dcb08abc2f1d3113000b72033de141d141bb1cd0b6a6caf1c417fbb4b9a1fd321d61b2ce627d244591ac12686f2b86f79bb35eff58ca692f92f; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:41:57.486Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:41:57.486Z] Response status: 404
+[2025-10-05T22:41:57.487Z] Response headers: {"connection":"Keep-Alive","content-length":"196","content-type":"text/html; charset=iso-8859-1","date":"Sun, 05 Oct 2025 22:41:58 GMT","keep-alive":"timeout=5, max=98","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-648421832\"","set-cookie":"TS46964ee8027=089c8d225bab2000933a888ec315a7812982c2370ef8e4ba15511eac2a58bdf983232add71d0cbe8081cc159321130006b5fff8299c61b21b1cd0b6a6caf1c417fbb4b9a1fd321d61b2ce627d244591ac12686f2b86f79bb35eff58ca692f92f; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains"}
+[2025-10-05T22:41:57.872Z] Bank page loaded: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:41:59.881Z] Page content extracted successfully
+[2025-10-05T22:41:59.881Z] Page content length: 13950
+[2025-10-05T22:41:59.882Z] Page content preview: <!DOCTYPE html><html lang="tr" style="height: 100%; width: 100%;"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <script type="text/javascript" src="/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js" data-dtconfig="app=ea7c4b59f27d43eb|owasp=1|featureHash=ICA7NVfqrux|rdnt=1|uxrgce=1|cuc=ajjcyy1k|mel=100000|expw=1|dpvc=1|lastModification=1755074537482|postfix=ajjcyy1k|tp=500,50,0|srbbv=2|agentUri=/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js|reportUrl=/acs/rb_a735c795-fdef-4844-8e76-f207326752e1|rid=RID_1288111993|rpid=1858670437|domain=bkmtest.com.tr"></script><link rel="apple-touch-icon" type="image/png" href="https://em...
+[2025-10-05T22:41:59.882Z] Page title: BKM ACS
+[2025-10-05T22:41:59.883Z] Page URL: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:41:59.884Z] All inputs found: [
+  {
+    "type": "password",
+    "name": "fakePasswordRemembered",
+    "id": "fakePasswordRemembered",
+    "placeholder": "",
+    "className": "",
+    "value": ""
+  },
+  {
+    "type": "text",
+    "name": "otpCode",
+    "id": "passwordfield",
+    "placeholder": "",
+    "className": "f-input",
+    "value": ""
+  },
+  {
+    "type": "checkbox",
+    "name": "",
+    "id": "toggle-1",
+    "placeholder": "",
+    "className": "popup txt-link trigger-absolute-panel",
+    "value": "on"
+  },
+  {
+    "type": "hidden",
+    "name": "acsTransactionId",
+    "id": "",
+    "placeholder": "",
+    "className": "",
+    "value": "0510fb62-7eae-4820-b253-e6e61540cca7"
+  }
+]
+[2025-10-05T22:41:59.885Z] All buttons found: [
+  {
+    "type": "button",
+    "name": "otpType",
+    "id": "retryButton",
+    "className": "button btn-1 re-code v1",
+    "textContent": "Doğrulama Kodunu Yeniden Gönder",
+    "value": "retry"
+  },
+  {
+    "type": "submit",
+    "name": "otpType",
+    "id": "submitbutton",
+    "className": "button btn-1 btn-commit",
+    "textContent": "Onayla",
+    "value": "confirm"
+  },
+  {
+    "type": "submit",
+    "name": "cancel",
+    "id": "triggercancel",
+    "className": "",
+    "textContent": "",
+    "value": "cancel"
+  }
+]
+[2025-10-05T22:41:59.886Z] Searching for OTP input with 36 selectors...
+[2025-10-05T22:41:59.901Z] Found visible OTP input: #passwordfield
+[2025-10-05T22:41:59.902Z] Filling OTP: 123456
+[2025-10-05T22:42:00.934Z] Searching for submit button with 32 selectors...
+[2025-10-05T22:42:00.941Z] Found visible submit button: #submitbutton
+[2025-10-05T22:42:00.941Z] Clicking submit button...
+[2025-10-05T22:42:00.976Z] Waiting for response...
+[2025-10-05T22:42:03.727Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:42:03.728Z] Response status: 200
+[2025-10-05T22:42:03.729Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=utf-8","date":"Sun, 05 Oct 2025 22:42:01 GMT","keep-alive":"timeout=5, max=97","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"540338481\", dtTao;desc=\"1\"","set-cookie":"TS46964ee8027=089c8d225bab20003cf4a76462c1f8a938e1a86c3d5bad374d7a1083f9e154182c6f60c19feda3ee08f36396261130002d6c8c316ad79cc6932da6db946baf18b6467533ddf62e668680710e92792f566317719c8be43ecb8f79a7a2490fd824; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:03.739Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/bkmacs2-dist.css
+[2025-10-05T22:42:03.740Z] Response status: 200
+[2025-10-05T22:42:03.740Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"8a36-6236589277f00\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1897979372\"","content-length":"35382","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Tue, 01 Oct 2024 07:47:40 GMT","content-type":"text/css"}
+[2025-10-05T22:42:03.742Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/css/main-dist.css
+[2025-10-05T22:42:03.742Z] Response status: 200
+[2025-10-05T22:42:03.742Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"31c9-5adc95f1819c0\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1332420732\"","content-length":"12745","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:19 GMT","content-type":"text/css"}
+[2025-10-05T22:42:03.744Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/main-dist.js
+[2025-10-05T22:42:03.744Z] Response status: 200
+[2025-10-05T22:42:03.744Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"269f6-5adc963ec1000\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1889927396\"","content-length":"158198","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","content-type":"application/javascript"}
+[2025-10-05T22:42:03.745Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_visa.png
+[2025-10-05T22:42:03.745Z] Response status: 200
+[2025-10-05T22:42:03.746Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"1797-5a6257dcad980\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-2024537629\"","content-length":"6039","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Thu, 21 May 2020 09:53:58 GMT","content-type":"image/png"}
+[2025-10-05T22:42:03.747Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/logo/logo_bkm.png
+[2025-10-05T22:42:03.748Z] Response status: 200
+[2025-10-05T22:42:03.748Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"273b-611b5e0a61f00\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-20434511\"","content-length":"10043","keep-alive":"timeout=5, max=100","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Mon, 19 Feb 2024 06:05:16 GMT","content-type":"image/png"}
+[2025-10-05T22:42:03.750Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/js/bkmacs-dist.js
+[2025-10-05T22:42:03.751Z] Response status: 200
+[2025-10-05T22:42:03.752Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","etag":"\"267-5adc963ec1000\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-850505173\"","content-length":"615","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:41:57 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:22:40 GMT","content-type":"application/javascript"}
+[2025-10-05T22:42:03.779Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:42:03.779Z] Response status: 200
+[2025-10-05T22:42:03.779Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"566","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS46964ee8027=089c8d225bab2000d7c2f7f5cdedf5094d92865ecb1b89850c1131acc3860f1349eb0bc5e58d8f71084d11207d11300005309bc8eca84ade932da6db946baf18b6467533ddf62e668680710e92792f566317719c8be43ecb8f79a7a2490fd824; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:03.787Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/password.ttf
+[2025-10-05T22:42:03.788Z] Response status: 200
+[2025-10-05T22:42:03.788Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"1f2fc-5adc9615bef40:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"616215450\", dtTao;desc=\"1\"","content-length":"127740","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:41:58 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:56 GMT","content-type":"font/ttf"}
+[2025-10-05T22:42:03.790Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_0_0.woff2
+[2025-10-05T22:42:03.790Z] Response status: 200
+[2025-10-05T22:42:03.791Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"8679-5adc9614cad00:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-792449904\", dtTao;desc=\"1\"","content-length":"34425","keep-alive":"timeout=5, max=99","date":"Sun, 05 Oct 2025 22:41:58 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","content-type":"font/woff2"}
+[2025-10-05T22:42:03.792Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/font/305927_1_0.woff2
+[2025-10-05T22:42:03.792Z] Response status: 200
+[2025-10-05T22:42:03.793Z] Response headers: {"strict-transport-security":"max-age=31536000; preload; includeSubDomains","content-security-policy":"object-src data: 'unsafe-eval';","timing-allow-origin":"*","etag":"\"8f2d-5adc9614cad00:dtagent10319250807130352+jSf\"","connection":"Keep-Alive","accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1821116483\", dtTao;desc=\"1\"","content-length":"36653","keep-alive":"timeout=5, max=98","date":"Sun, 05 Oct 2025 22:41:58 GMT","x-xss-protection":"1; mode=block","last-modified":"Wed, 26 Aug 2020 15:21:55 GMT","content-type":"font/woff2"}
+[2025-10-05T22:42:03.861Z] Response received from: https://emvacs-preprod.bkmtest.com.tr/acs/static/img/check.png
+[2025-10-05T22:42:03.862Z] Response status: 200
+[2025-10-05T22:42:03.862Z] Response headers: {"accept-ranges":"bytes","access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-length":"20334","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"image/png","date":"Sun, 05 Oct 2025 22:42:04 GMT","etag":"\"4f6e-5855540f3ff00\"","keep-alive":"timeout=5, max=100","last-modified":"Sat, 30 Mar 2019 20:01:32 GMT","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"1867282057\"","set-cookie":"TS46964ee8027=089c8d225bab20004fd651c1fcecfac8ac15f6b58f45d603ca5ab8d2885dd6769da7029af11f8253086845b1ff113000056110ba360623b6932da6db946baf18b6467533ddf62e668680710e92792f566317719c8be43ecb8f79a7a2490fd824; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:04.351Z] Navigation completed to: https://emvacs-preprod.bkmtest.com.tr/acs/creq
+[2025-10-05T22:42:04.353Z] Page content after submit: Doğrulama Başarılı...
+[2025-10-05T22:42:04.355Z] Success detected from content
+[2025-10-05T22:42:04.356Z] Starting 3DS finalize process...
+[2025-10-05T22:42:04.357Z] [3DS] Starting finalize process...
+[2025-10-05T22:42:04.357Z] [3DS] Waiting for automatic redirect to merchant...
+[2025-10-05T22:42:06.923Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/tds/challenge
+[2025-10-05T22:42:06.924Z] Response status: 200
+[2025-10-05T22:42:06.926Z] Response headers: {"access-control-allow-origin":"bkmtest.com.tr","connection":"Keep-Alive","content-security-policy":"object-src data: 'unsafe-eval';","content-type":"text/html;charset=UTF-8","date":"Sun, 05 Oct 2025 22:42:06 GMT","keep-alive":"timeout=5, max=100","server-timing":"dtSInfo;desc=\"0\", dtRpid;desc=\"-1621272330\", dtTao;desc=\"1\"","set-cookie":"TS6d45e941027=089c8d225bab20005009ca31f6f3c995a1172b8d8a87aaca8f35be648d539f541351510c4443dd4008b2044d0a11300035ac30d35fa11636e3c2bd5b85b3eb1e41406b87089ceaba6c2d99819dde064307844ecc9e6bc1aed8bec8072f68c51e; Path=/","strict-transport-security":"max-age=31536000; preload; includeSubDomains","timing-allow-origin":"*","transfer-encoding":"chunked","vary":"Origin,Access-Control-Request-Method,Access-Control-Request-Headers","x-oneagent-js-injection":"true","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:06.983Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/tds/ruxitagentjs_ICA7NVfqrux_10319250807130352.js
+[2025-10-05T22:42:06.984Z] Response status: 200
+[2025-10-05T22:42:06.985Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab2000165a308881e8f79e5a19925803331690e5b68a1fd67c25ea0598c8c3d4d77b4208336b0e271130006c6a6f40f8a0e1f1e3c2bd5b85b3eb1e41406b87089ceaba6c2d99819dde064307844ecc9e6bc1aed8bec8072f68c51e; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:07.106Z] Response received from: https://emvtds-preprod.bkmtest.com.tr/favicon.ico
+[2025-10-05T22:42:07.107Z] Response status: 200
+[2025-10-05T22:42:07.107Z] Response headers: {"cache-control":"no-cache","connection":"close","content-length":"565","content-type":"text/html; charset=utf-8","pragma":"no-cache","set-cookie":"TS6d45e941027=089c8d225bab200090560887f84192de940199066cf5db4ae613bff0f088efead1d185fd71a2c53608dd509c16113000e0e573269e5c677fe3c2bd5b85b3eb1e41406b87089ceaba6c2d99819dde064307844ecc9e6bc1aed8bec8072f68c51e; Path=/","x-content-type-options":"nosniff","x-frame-options":"SAMEORIGIN","x-xss-protection":"1; mode=block"}
+[2025-10-05T22:42:08.038Z] [3DS] Navigation completed to: https://emvtds-preprod.bkmtest.com.tr/tds/challenge
+[2025-10-05T22:42:08.039Z] [3DS][FINALIZE] Forcing navigation to okUrl: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:42:08.040Z] [3DS][FINALIZE][ATTEMPT_POST] Trying form POST submission
+[2025-10-05T22:42:08.061Z] [3DS][FINALIZE][POST_FAILED] POST navigation failed, trying GET: Execution context was destroyed, most likely because of a navigation.
+[2025-10-05T22:42:08.364Z] Response received from: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:42:08.365Z] Response status: 405
+[2025-10-05T22:42:08.366Z] Response headers: {"connection":"Keep-Alive","date":"Sun, 05 Oct 2025 22:42:09 GMT","keep-alive":"timeout=15, max=200","set-cookie":"dtCookie=v_4_srv_40_sn_FBCE4ED5FFD7C0DAA0A5A8D529EEFCCA_perc_100000_ol_0_mul_1_app-3Aea7c4b59f27d43eb_0_rcs-3Acss_0; Path=/; Domain=.turkcell.tgc","x-content-type-options":"nosniff","access-control-allow-headers":"*","access-control-allow-methods":"POST, GET, OPTIONS, DELETE","access-control-allow-origin":"*","access-control-max-age":"3600","allow":"POST","content-language":"tr-TR","content-length":"755","content-type":"text/html;charset=UTF-8","server-timing":"dtRpid;desc=\"1711737889\", dtSInfo;desc=\"0\"","x-oneagent-js-injection":"true"}
+[2025-10-05T22:42:08.367Z] [3DS] Detected merchant response: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:42:08.459Z] [3DS][FINALIZE] Navigation completed to: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1, method: get, status: 405
+[2025-10-05T22:42:08.460Z] [3DS][FINALIZE][RETRY_POST] Got 405 or suspicious response, trying fetch POST with form data
+[2025-10-05T22:42:08.822Z] Response received from: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:42:08.823Z] Response status: 200
+[2025-10-05T22:42:08.823Z] Response headers: {"connection":"Keep-Alive","date":"Sun, 05 Oct 2025 22:42:09 GMT","keep-alive":"timeout=15, max=200","set-cookie":"dtCookie=v_4_srv_40_sn_699E6514F194BD99A6FD62B2324886CF_perc_100000_ol_0_mul_1_app-3Aea7c4b59f27d43eb_0_rcs-3Acss_0; Path=/; Domain=.turkcell.tgc","x-content-type-options":"nosniff","access-control-allow-headers":"*","access-control-allow-methods":"POST, GET, OPTIONS, DELETE","access-control-allow-origin":"*","access-control-max-age":"3600","content-language":"tr-TR","content-length":"610","content-type":"text/html;charset=ISO-8859-1","server-timing":"dtRpid;desc=\"-1233496360\", dtTao;desc=\"1\", dtSInfo;desc=\"0\"","timing-allow-origin":"*","x-oneagent-js-injection":"true"}
+[2025-10-05T22:42:08.824Z] [3DS][FINALIZE][POST_RETRY_RESULT] Fetch POST result: status=200, body preview: <html>
+<head>
+<title>Submit Bank Form</title>
+<script type="text/javascript" src="/paymentmanagement...
+[2025-10-05T22:42:08.825Z] [3DS][FINALIZE][POST_SUCCESS] Successful POST finalize with status 200
+[2025-10-05T22:42:08.825Z] [3DS][RESULT] Finalize COMPLETE: method=fetch-post, status=200, url=https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1
+[2025-10-05T22:42:08.826Z] Automation completed. Success: true, URL: https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult?xpaycellsid=04af9bb8-fb9e-41b6-89ea-2e7e0ec32db1, Error: none
