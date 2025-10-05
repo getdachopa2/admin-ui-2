@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-10-04T14:38:38.304Z",
+  "status": 200,
+  "headers": {
+    "access-control-allow-headers": "*",
+    "access-control-allow-methods": "POST, GET, OPTIONS, DELETE",
+    "access-control-allow-origin": "*",
+    "access-control-max-age": "3600",
+    "connection": "Keep-Alive",
+    "content-language": "en-US",
+    "content-length": "1520",
+    "content-type": "text/html;charset=UTF-8",
+    "date": "Sat, 04 Oct 2025 14:38:38 GMT",
+    "keep-alive": "timeout=15, max=200",
+    "server-timing": "dtRpid;desc=\"-307384911\", dtTao;desc=\"1\", dtSInfo;desc=\"0\"",
+    "set-cookie": "dtCookie=v_4_srv_1_sn_A3EFE7374975B431E7C3B93DB8F20445_perc_100000_ol_0_mul_1_app-3Aea7c4b59f27d43eb_0_rcs-3Acss_0; Path=/; Domain=.turkcell.tgc, TS0110d6df=0162d5e6965ae155c99f2b0a9bb7fa33d08039c6f47a5bed8223a0fcae7dfd8d256dd152894a39c34f744d377482b6b13d18c6203a2871e074943dec6a7b5b4dc850270073; Path=/; Domain=.omccstb.turkcell.com.tr;",
+    "timing-allow-origin": "*",
+    "x-content-type-options": "nosniff",
+    "x-oneagent-js-injection": "true"
+  },
+  "body": "\n\n\n\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n    <title>3D Yönlendirme Hatası</title>\n    <script type=\"text/javascript\" src=\"/paymentmanagement/ruxitagentjs_ICANVfqru_10321250808084810.js\" data-dtconfig=\"app=ea7c4b59f27d43eb|cuc=0opryidt|owasp=1|mel=100000|featureHash=ICANVfqru|dpvc=1|lastModification=1759404118970|tp=500,50,0|rdnt=1|uxrgce=1|srbbv=2|agentUri=/paymentmanagement/ruxitagentjs_ICANVfqru_10321250808084810.js|reportUrl=/paymentmanagement/rb_3f2c3bac-8f12-4c72-8ade-c9ccfa775b54|rid=RID_820534430|rpid=-307384911|domain=turkcell.tgc\"></script><script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-white flex items-center justify-center min-h-screen\">\n<div class=\"flex flex-col items-center justify-center text-center p-6 bg-white rounded-lg w-full max-w-[90%] sm:max-w-[80%] md:max-w-[60%] lg:max-w-[40%] xl:max-w-[30%]\">\n    <img\n            src=\"https://763cxksuqvyg.merlincdn.net/assets/img/error-icon.svg\"\n            alt=\"Error icon\"\n            class=\"w-32 h-auto\"\n    />\n\n\n    <h1 class=\"text-2xl font-semibold text-gray-800 mb-4\">Beklenmedik Bir Hata Oluştu</h1>\n    <p class=\"text-gray-600 mb-6\">\n        3D Sayfasına yönlendirilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.\n    </p>\n    <img\n            src=\"https://763cxksuqvyg.merlincdn.net/assets/img/PaycellLogo.png\"\n            alt=\"Paycell Logo\"\n            class=\"w-32 h-auto\"\n    />\n</div>\n</body>\n</html>\n"
+}
+
+{
+  "timestamp": "2025-10-04T14:39:02.748Z",
+  "status": 200,
+  "headers": {
+    "access-control-allow-headers": "*",
+    "access-control-allow-methods": "POST, GET, OPTIONS, DELETE",
+    "access-control-allow-origin": "*",
+    "access-control-max-age": "3600",
+    "connection": "Keep-Alive",
+    "content-language": "en-US",
+    "content-length": "1521",
+    "content-type": "text/html;charset=UTF-8",
+    "date": "Sat, 04 Oct 2025 14:39:03 GMT",
+    "keep-alive": "timeout=15, max=200",
+    "server-timing": "dtRpid;desc=\"-1389852913\", dtTao;desc=\"1\", dtSInfo;desc=\"0\"",
+    "set-cookie": "dtCookie=v_4_srv_36_sn_816240AAF958F41393404F01F233122C_perc_100000_ol_0_mul_1_app-3Aea7c4b59f27d43eb_0_rcs-3Acss_0; Path=/; Domain=.turkcell.tgc, TS0110d6df=0162d5e696e2a78ad8b9de4f2885342dce38a2109c5c67f04fe36d5ed55818927caae5eae1542d4105c06496f2395d99bb2e0ec431a8d7f486d07f88abd1282da05b417a52; Path=/; Domain=.omccstb.turkcell.com.tr;",
+    "timing-allow-origin": "*",
+    "x-content-type-options": "nosniff",
+    "x-oneagent-js-injection": "true"
+  },
+  "body": "\n\n\n\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\"/>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n    <title>3D Yönlendirme Hatası</title>\n    <script type=\"text/javascript\" src=\"/paymentmanagement/ruxitagentjs_ICANVfqru_10321250808084810.js\" data-dtconfig=\"app=ea7c4b59f27d43eb|cuc=0opryidt|owasp=1|mel=100000|featureHash=ICANVfqru|dpvc=1|lastModification=1759404118970|tp=500,50,0|rdnt=1|uxrgce=1|srbbv=2|agentUri=/paymentmanagement/ruxitagentjs_ICANVfqru_10321250808084810.js|reportUrl=/paymentmanagement/rb_3f2c3bac-8f12-4c72-8ade-c9ccfa775b54|rid=RID_820534430|rpid=-1389852913|domain=turkcell.tgc\"></script><script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-white flex items-center justify-center min-h-screen\">\n<div class=\"flex flex-col items-center justify-center text-center p-6 bg-white rounded-lg w-full max-w-[90%] sm:max-w-[80%] md:max-w-[60%] lg:max-w-[40%] xl:max-w-[30%]\">\n    <img\n            src=\"https://763cxksuqvyg.merlincdn.net/assets/img/error-icon.svg\"\n            alt=\"Error icon\"\n            class=\"w-32 h-auto\"\n    />\n\n\n    <h1 class=\"text-2xl font-semibold text-gray-800 mb-4\">Beklenmedik Bir Hata Oluştu</h1>\n    <p class=\"text-gray-600 mb-6\">\n        3D Sayfasına yönlendirilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.\n    </p>\n    <img\n            src=\"https://763cxksuqvyg.merlincdn.net/assets/img/PaycellLogo.png\"\n            alt=\"Paycell Logo\"\n            class=\"w-32 h-auto\"\n    />\n</div>\n</body>\n</html>\n"
+}
+

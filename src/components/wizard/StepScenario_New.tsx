@@ -3,10 +3,10 @@ import { useMemo } from 'react';
 import type { Scenario } from '@/types/n8n';
 
 const SCENARIOS: { key: Scenario; title: string; desc: string; icon: string }[] = [
-  { key: 'ALL',              title: 'Hepsi (Full Suite)',       desc: 'Payment + Cancel + Refund akışlarını sırayla çalıştırır.', icon: '∞' },
-  { key: 'PAYMENT_3DS_OFF',  title: 'Ödeme (3D Off)',          desc: 'Token + 3DSiz ödeme akışı.', icon: '$' },
-  { key: 'CANCEL',           title: 'İptal',                    desc: 'Mevcut başarılı ödemeleri iptal eder.', icon: '×' },
-  { key: 'REFUND',           title: 'İade',                     desc: 'Mevcut başarılı ödemeleri iade eder.', icon: '↺' },
+  { key: 'ALL',              title: 'Hepsi (Full Suite)',       desc: 'Payment + Cancel + Refund akışlarını sırayla çalıştırır.', icon: '🔄' },
+  { key: 'PAYMENT_3DS_OFF',  title: 'Ödeme (3D Off)',          desc: 'Token + 3DSiz ödeme akışı.', icon: '💳' },
+  { key: 'CANCEL',           title: 'İptal',                    desc: 'Mevcut başarılı ödemeleri iptal eder.', icon: '❌' },
+  { key: 'REFUND',           title: 'İade',                     desc: 'Mevcut başarılı ödemeleri iade eder.', icon: '↩️' },
 ];
 
 export default function StepScenario({

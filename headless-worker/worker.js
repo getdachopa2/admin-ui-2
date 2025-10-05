@@ -1,0 +1,263 @@
+// worker.js
+import express from 'express';
+import puppeteer from 'puppeteer';
+// import fetch from 'node-fetch'; // Gerek yok; Node 18+ global fetch var
+
+// Diagnostic helpers: surface uncaught errors so PowerShell doesn't hide them
+console.log('worker.js starting - diagnostics enabled');
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT_EXCEPTION:', err && (err.stack || err.message || err));
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED_REJECTION:', reason);
+});
+
+const app = express();
+const PORT = 3002;
+
+app.use(express.json());
+
+// Add a minimal Content-Security-Policy that allows same-origin connections.
+// This prevents strict defaults (default-src 'none') from blocking DevTools' local fetches
+// while keeping other restrictions in place. Adjust as needed.
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self'");
+  next();
+});
+
+// (İsteğe bağlı) sağlık kontrolü:
+app.get('/health', (req, res) => res.json({ ok: true }));
+
+// Simple root page and sample 3D challenge flow for local testing
+app.get('/', (req, res) => {
+  res.type('html').send(`
+    <html>
+      <head><title>Headless Worker</title></head>
+      <body>
+        <h1>Headless Worker</h1>
+        <p>Use <a href="/sample-3d">/sample-3d</a> to see a mock 3D challenge page.</p>
+      </body>
+    </html>
+  `);
+});
+
+// Mock 3D challenge page: enter OTP and submit to simulate success/fail redirect
+app.get('/sample-3d', (req, res) => {
+  res.type('html').send(`
+    <html>
+      <head><title>Mock 3D Challenge</title></head>
+      <body>
+        <h2>Mock 3D Challenge</h2>
+        <form method="POST" action="/sample-3d/submit">
+          <label>OTP: <input name="otp" /></label>
+          <button type="submit">Submit</button>
+        </form>
+      </body>
+    </html>
+  `);
+});
+
+import bodyParser from 'body-parser';
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.post('/sample-3d/submit', (req, res) => {
+  const otp = req.body.otp || '';
+  // simple rule: otp === '1234' => success, else fail
+  if (otp.trim() === '1234') return res.redirect('/success');
+  return res.redirect('/fail');
+});
+
+app.get('/success', (req, res) => res.type('html').send('<h1>3D Success</h1>'));
+app.get('/fail', (req, res) => res.type('html').send('<h1>3D Fail</h1>'));
+
+// Stub for DevTools appspecific JSON to avoid console noise
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.json({ name: 'headless-worker-stub', description: 'Stub for local DevTools fetch' });
+});
+
+// Reusable automation function: navigates to launchUrl, fills OTP, submits,
+// waits for navigation, and returns { success: boolean, finalUrl }
+async function performAutomation({ launchUrl, otp, challengeSelector, submitSelector, successPattern, timeout = 20000 }) {
+  let browser = null;
+  try {
+    console.log('Launching browser...');
+    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setBypassCSP(true);
+
+    console.log(`Navigating to launchUrl: ${launchUrl}`);
+    await page.goto(launchUrl, { waitUntil: 'networkidle2' });
+
+    // First try: the OTP input is on the landing page
+    try {
+      console.log(`Waiting for OTP input selector on main page: "${challengeSelector}"`);
+      await page.waitForSelector(challengeSelector, { timeout: 15000 });
+      console.log(`Typing OTP on main page: "${otp}"`);
+      await page.type(challengeSelector, otp);
+      console.log(`Clicking submit button on main page: "${submitSelector}"`);
+      await page.click(submitSelector);
+    } catch (eMain) {
+      // If main page doesn't have the selector, it might open a popup/window for bank auth
+      console.log('OTP selector not found on main page, attempting to follow popup flow');
+
+      // Try to click the submit/redirect button and wait for a popup
+      let popupPage = null;
+      try {
+        const [popup] = await Promise.all([
+          page.waitForEvent('popup', { timeout: 5000 }).catch(() => null),
+          page.click(submitSelector).catch(() => null),
+        ]);
+        popupPage = popup || null;
+      } catch (clickErr) {
+        console.warn('Error while attempting to click and wait for popup:', clickErr);
+      }
+
+      // If popup didn't appear immediately, try to detect any new pages after a short delay
+      if (!popupPage) {
+        await new Promise((r) => setTimeout(r, 800));
+        const pages = await browser.pages();
+        // Find a page that is not the original and that likely contains the OTP selector
+        popupPage = pages.find((p) => p !== page && p.url() && p.url() !== 'about:blank') || null;
+      }
+
+      if (!popupPage) {
+        console.warn('Popup page not detected; failing this automation step');
+        throw eMain;
+      }
+
+      console.log('Following popup page at:', popupPage.url());
+      try {
+        await popupPage.bringToFront();
+        await popupPage.waitForSelector(challengeSelector, { timeout: 15000 });
+        console.log(`Typing OTP in popup: "${otp}"`);
+        await popupPage.type(challengeSelector, otp);
+        console.log(`Clicking submit button in popup: "${submitSelector}"`);
+        await popupPage.click(submitSelector);
+        // Wait for navigation in popup
+        await popupPage.waitForNavigation({ waitUntil: 'networkidle2', timeout });
+      } catch (popupErr) {
+        console.error('Popup automation error:', popupErr);
+        throw popupErr;
+      }
+    }
+
+    console.log('Waiting for navigation after submit...');
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout }).catch(() => { /* ignore if popup handled navigation */ });
+
+    const finalUrl = page.url();
+    console.log(`Final URL after redirection: ${finalUrl}`);
+    const isSuccess = new RegExp(successPattern, 'i').test(finalUrl);
+    return { success: isSuccess, finalUrl };
+  } catch (error) {
+    console.error('Puppeteer automation error:', error);
+    return { success: false, error: String(error) };
+  } finally {
+    if (browser) {
+      console.log('Closing browser.');
+      await browser.close();
+    }
+  }
+}
+
+// Fire-and-forget endpoint used by other systems: returns 202 and notifies n8n when done
+app.post('/simulate-3d', async (req, res) => {
+  console.log('Received 3D simulation request:', req.body);
+  const { launchUrl, otp, challengeSelector, submitSelector, successPattern, runKey, n8nCallbackBase } = req.body;
+
+  if (!launchUrl || !otp || !challengeSelector || !submitSelector || !runKey || !n8nCallbackBase) {
+    console.error('Missing required parameters');
+    return res.status(400).json({ success: false, error: 'Missing required parameters' });
+  }
+
+  res.status(202).json({ success: true, message: 'Simulation started' });
+
+  // Run asynchronously and notify n8n when complete
+  (async () => {
+    // If launchUrl points at localhost from n8n, rewrite to host.docker.internal so the
+    // containerized browser can reach the host service. This mirrors the callback rewrite.
+    let effectiveLaunch = launchUrl;
+    try {
+      const lu = new URL(launchUrl);
+      if ((lu.hostname === 'localhost' || lu.hostname === '127.0.0.1') && process.env.USE_HOST_DOCKER_INTERNAL !== 'false') {
+        lu.hostname = 'host.docker.internal';
+        effectiveLaunch = lu.toString();
+        console.log(`Rewrote launchUrl to host.docker.internal: ${effectiveLaunch}`);
+      }
+    } catch (e) {
+      console.warn('Invalid launchUrl provided, using original value:', launchUrl);
+    }
+
+    const outcome = await performAutomation({ launchUrl: effectiveLaunch, otp, challengeSelector, submitSelector, successPattern });
+    await notifyN8N(outcome.success ? 'success' : 'fail', runKey, n8nCallbackBase);
+  })();
+});
+
+// Synchronous test endpoint: runs automation against a provided URL and returns result
+app.post('/run-sample', async (req, res) => {
+  const { otp = '1234', launchUrl = `http://localhost:${PORT}/sample-3d`, challengeSelector = 'input[name="otp"]', submitSelector = 'button[type="submit"]', successPattern = '/success' } = req.body || {};
+  const outcome = await performAutomation({ launchUrl, otp, challengeSelector, submitSelector, successPattern });
+  return res.json(outcome);
+});
+
+async function notifyN8N(status, runKey, n8nCallbackBase) {
+  const webhookPath = status === 'success' ? '/webhook/payment-test/3d/success' : '/webhook/payment-test/3d/fail';
+
+  // Allow optional environment variable N8N_BASIC to provide basic auth credentials.
+  // Supported formats:
+  // - username:password
+  // - Basic <base64>
+  const rawBasic = process.env.N8N_BASIC;
+  let authHeader;
+  if (rawBasic) {
+    if (/^Basic\s+/i.test(rawBasic)) {
+      authHeader = rawBasic;
+    } else {
+      // assume username:password
+      authHeader = 'Basic ' + Buffer.from(rawBasic, 'utf8').toString('base64');
+    }
+  }
+
+  // If the callback base looks like it's pointing to localhost/127.0.0.1 and we're running inside Docker,
+  // rewrite it to host.docker.internal so the container can reach the host service. This is a best-effort
+  // heuristic and only applied when host.docker.internal is available on the platform (Docker for Windows/Mac).
+  let callbackBase = n8nCallbackBase;
+  try {
+    const urlObj = new URL(n8nCallbackBase);
+    if ((urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') && process.env.USE_HOST_DOCKER_INTERNAL !== 'false') {
+      // prefer host.docker.internal if present; the network may not resolve on Linux unless specially configured
+      urlObj.hostname = 'host.docker.internal';
+      callbackBase = urlObj.toString().replace(/\/$/, '');
+      console.log(`Rewrote n8nCallbackBase to host.docker.internal: ${callbackBase}`);
+    }
+  } catch (e) {
+    // If parsing fails, fall back to the provided value
+    console.warn('Invalid n8nCallbackBase URL, using raw value:', n8nCallbackBase);
+  }
+
+  const url = `${callbackBase}${webhookPath}`;
+  console.log(`Notifying n8n at: ${url} with runKey: ${runKey}`);
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authHeader) headers['Authorization'] = authHeader;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ runKey, reason: status === 'fail' ? 'automation-error' : 'automation-success' }),
+      // short timeout from fetch is not available in global fetch; rely on underlying platform timeouts
+    });
+
+    // Log non-2xx responses for easier debugging
+    if (!res.ok) {
+      const text = await res.text().catch(() => '<no-body>');
+      console.error(`n8n notify returned ${res.status} ${res.statusText}: ${text}`);
+    }
+  } catch (error) {
+    console.error(`Failed to notify n8n at ${url}:`, error);
+  }
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Headless 3D Worker listening on http://localhost:${PORT}`);
+});

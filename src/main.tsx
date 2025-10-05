@@ -11,6 +11,7 @@ import TestResults from '@/pages/TestResults';
 import KartDurumRaporu from '@/pages/KartDurumRaporu';
 import ParametreDurumKontrol from '@/pages/ParametreDurumKontrol';
 import Changelog from '@/pages/Changelog';
+import ThreeDSession from '@/pages/ThreeDSession';
 
 
 const router = createBrowserRouter([
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { path: 'kart-durum-raporu', element: <KartDurumRaporu /> },
       { path: 'parametre-durum-kontrol', element: <ParametreDurumKontrol /> },
       { path: 'changelog', element: <Changelog /> },
+  { path: 'three-d-session', element: <ThreeDSession /> },
       { path: 'kanal-kontrol', element: <Navigate to="/kanal-kontrol-botu" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

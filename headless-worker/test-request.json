@@ -1,0 +1,9 @@
+{
+  "launchUrl": "http://host.docker.internal:5701/webhook/payment-test/3d/launch?runKey=pay-1759583120220-r63qpb",
+  "otp": "12345",
+  "challengeSelector": "input[name=otp]",
+  "submitSelector": "button[type=submit]",
+  "successPattern": "callback|pares|cres",
+  "n8nCallbackBase": "http://host.docker.internal:5701",
+  "runKey": "pay-1759583120220-r63qpb"
+}

@@ -261,7 +261,7 @@ const LiveSteps: React.FC<LiveStepsProps> = ({ steps, isRunning }) => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-medium bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Canlı Test Adımları
+            🚀 Canlı Test Adımları
           </h3>
           <div className="flex items-center gap-2 text-xs text-neutral-400">
             <div className="h-1.5 w-1.5 rounded-full bg-neutral-600"></div>
@@ -272,9 +272,7 @@ const LiveSteps: React.FC<LiveStepsProps> = ({ steps, isRunning }) => {
         <div className="relative rounded-lg border border-dashed border-neutral-700 bg-gradient-to-br from-neutral-900/50 to-neutral-800/30 p-6">
           <div className="text-center">
             <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+              <span className="text-xl">⚡</span>
             </div>
             <p className="text-sm text-neutral-400">Test başlamadı...</p>
             <p className="text-xs text-neutral-500 mt-1">Sihirbazdan test başlatın</p>

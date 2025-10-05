@@ -1,0 +1,32 @@
+﻿FROM node:20-slim
+WORKDIR /app
+
+# Puppeteer/Playwright runtime deps (minimal)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libx11-xcb1 \
+    libx11-6 \
+    libgdk-pixbuf2.0-0 \
+    libgtk-3-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxss1 \
+    libnss3 \
+    libxrandr2 \
+    libgbm1 \
+    libatk1.0-0 \
+    libpangocairo-1.0-0 \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
+
+COPY . .
+
+ENV PORT=3002
+EXPOSE 3002
+CMD ["node","worker.js"]

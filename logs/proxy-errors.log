@@ -1,0 +1,7 @@
+{
+  "timestamp": "2025-10-04T14:10:56.744Z",
+  "targetUrl": "http://localhost:7001/paymentmanagement/rest/threeDSecure",
+  "error": "request to http://localhost:7001/paymentmanagement/rest/threeDSecure failed, reason: ",
+  "stack": "FetchError: request to http://localhost:7001/paymentmanagement/rest/threeDSecure failed, reason: \n    at ClientRequest.<anonymous> (C:\\Users\\PC\\Desktop\\n8n8\\adminui\\admin-ui-main\\node_modules\\node-fetch\\lib\\index.js:1501:11)\n    at ClientRequest.emit (node:events:518:28)\n    at emitErrorEvent (node:_http_client:104:11)\n    at Socket.socketErrorListener (node:_http_client:518:5)\n    at Socket.emit (node:events:518:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"
+}
+

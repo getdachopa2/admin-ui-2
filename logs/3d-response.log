@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-10-04T13:58:52.659Z",
+  "endpoint": "/3d-response",
+  "headers": {
+    "host": "localhost:3002",
+    "connection": "keep-alive",
+    "content-length": "162",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": "\"Google Chrome\";v=\"141\", \"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"141\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "origin": "http://localhost:3002",
+    "content-type": "application/x-www-form-urlencoded",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "sec-fetch-site": "same-origin",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "referer": "http://localhost:3002/paymentmanagement/rest/threeDSecure",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "en-US,en;q=0.9,tr;q=0.8",
+    "cookie": "jenkins-timestamper-offset=-10800000; jenkins-timestamper=system; jenkins-timestamper-local=true; rl_page_init_referrer=RudderEncrypt%3AU2FsdGVkX19mYMerLLnG58Pi4ufZ6SgtnTKjj3bVGmY%3D; rl_page_init_referring_domain=RudderEncrypt%3AU2FsdGVkX19duYNjSJ7FsG1DtT8g2U7Z5VVjm4lawDY%3D; n8n-auth=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQ3ODZmYWZmLWUxOTgtNDQzMC05Y2RmLWU4MjQ1ZTllYjliYyIsImhhc2giOiJnZzVZVGtScnRuIiwiYnJvd3NlcklkIjoiWm5kMnQ3SUwwWEhwMk1QYzNpVmdaLzNkM1lJazJLdkQySitCU0E2WUJ6ND0iLCJ1c2VkTWZhIjpmYWxzZSwiaWF0IjoxNzU5MTQ4NzI3LCJleHAiOjE3NTk3NTM1Mjd9.hFOurbjgcB7j5v-IAB16VwzJWaE45pKogi1iXeKGJ4Y; rl_anonymous_id=RudderEncrypt%3AU2FsdGVkX19uLGuaWYHQHTDKn56J3ABIpSm%2FP2wetSxtZZTeRPqpqxQ9lcjnQ3%2BzIfNdQknDBsPci7iK2%2FLHdg%3D%3D; rl_user_id=RudderEncrypt%3AU2FsdGVkX1%2B01sz%2BNpUJP5vOJSoVUWeIT4bIE0GEIA9MohVHlkH7X4FBFPLMFHwDTx38YjUjqrU2EiwT%2BFC%2FFq%2BALQlYjHx1XSkdZIGDvUcO%2FrUgBaPwj5WFpRUVgaZlmXKebWQXxP%2B56y05ePRijmqchlHYJpRcgX56EkUO0VA%3D; rl_trait=RudderEncrypt%3AU2FsdGVkX1%2BbMMvRqwmxGMM770edl9z95NTM2eX3DmxmewJw2ZfDCnna%2Bi33mwNUv9q96f5DNJUhc0Mi6%2F7u9PFNcDC%2FJT%2BtzEer%2FaG%2F8KO3MrOuo%2FDVUH3B2wIHYUw6R006uBBQ5t93DsCfHoUpPVOh1irn4mFEcQ1G6Ya%2BFGM%3D; ph_phc_4URIAm1uYfJO7j8kWSe0J8lc8IqnstRLS7Jx8NcakHo_posthog=%7B%22distinct_id%22%3A%220c06bcfc9b0785a49cba2e72519a6d2d2d23670b7f4be2c90fba9db1ac55b323%234786faff-e198-4430-9cdf-e8245e9eb9bc%22%2C%22%24sesid%22%3A%5B1759581542789%2C%220199af31-6ede-7bc1-a854-554b5885375b%22%2C1759580876510%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22http%3A%2F%2Flocalhost%3A5678%2Fhome%2Fworkflows%22%7D%7D; rl_session=RudderEncrypt%3AU2FsdGVkX19c7C4aTP1Hu0CNamJ5DQ5xnYtETjOAV0aLuyr87tI95G%2Bu8pIAhyY7QJ03y8YRLdqXXeFd8FeNL%2FUR8GY0QP0lUvAvo268p7raoTeNr4MGKtGXq94oq%2BR3ORNuVQ6l365CAJDV0fAKtg%3D%3D"
+  },
+  "body": {
+    "threeDSessionId": "TEST_SESSION_1759586328458",
+    "MD": "test-md-1759586328458",
+    "orderId": "TEST_ORDER_1759586328458",
+    "amount": "100",
+    "result": "success",
+    "cavv": "test-cavv-1759586328458",
+    "eci": "05"
+  }
+}
+

@@ -1,0 +1,422 @@
+<html>
+<head>
+    <title>3D-Secure Page</title>
+    <meta http-equiv="Content-Type" content="application/json; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+</head>
+<body style="background:#f1f1f1;">
+
+
+<script type="text/javascript">
+    //<![CDATA[
+    window.onload = function () {
+        document.getElementById("serviceType").style.visibility = "hidden";
+        document.getElementById("serviceType").style.display = "none";
+        document.getElementById("operationType").style.visibility = "hidden";
+        document.getElementById("operationType").style.display = "none";
+        document.getElementById("twoStepTimeout").style.visibility = "hidden";
+        document.getElementById("twoStepTimeout").style.display = "none";
+        document.getElementById("userCode").style.visibility = "hidden";
+        document.getElementById("userCode").style.display = "none";
+        document.getElementById("pin").style.visibility = "hidden";
+        document.getElementById("pin").style.display = "none";
+    };
+
+    function BankaAyarla(banka, cardnumber, cardexpiredatemonth, cardexpiredateyear, cardCVV, buttonName) {
+        document.getElementById("cardnumber").value = cardnumber;
+        document.getElementById("cardexpiredatemonth").value = cardexpiredatemonth;
+        document.getElementById("cardexpiredateyear").value = cardexpiredateyear;
+        if (cardCVV != null) {
+            document.getElementById("cardCVV").value = cardCVV;
+        }
+        document.getElementById("banka").value = banka;
+		document.getElementById("amount").defaultValue = '100';
+		document.getElementById("installmentCount").defaultValue = '0';
+		document.getElementById("cardholdername").defaultValue = "Kezban Mahmut";
+		document.getElementById("serviceType").defaultValue = "CCProxy";
+		document.getElementById("operationType").defaultValue = "Sale3DSEC";
+		document.getElementById("twoStepTimeout").defaultValue = "10";
+		document.getElementById("userCode").defaultValue = "20099";
+		document.getElementById("pin").defaultValue = "6ABADB8E1DD74DD0AFF5";
+		
+		
+        if (buttonName === 'WireCard') {
+            document.getElementById("serviceType").style.visibility = "visible";
+            document.getElementById("serviceType").style.display = "block";
+            document.getElementById("operationType").style.visibility = "visible";
+            document.getElementById("operationType").style.display = "block";
+            document.getElementById("twoStepTimeout").style.visibility = "visible";
+            document.getElementById("twoStepTimeout").style.display = "block";
+            document.getElementById("userCode").style.visibility = "visible";
+            document.getElementById("userCode").style.display = "block";
+            document.getElementById("pin").style.visibility = "visible";
+            document.getElementById("pin").style.display = "block";
+        } else {
+            document.getElementById("serviceType").style.visibility = "hidden";
+            document.getElementById("serviceType").style.display = "none";
+            document.getElementById("operationType").style.visibility = "hidden";
+            document.getElementById("operationType").style.display = "none";
+            document.getElementById("twoStepTimeout").style.visibility = "hidden";
+            document.getElementById("twoStepTimeout").style.display = "none";
+            document.getElementById("userCode").style.visibility = "hidden";
+            document.getElementById("userCode").style.display = "none";
+            document.getElementById("pin").style.visibility = "hidden";
+            document.getElementById("pin").style.display = "none";
+        }
+    }
+
+    var invocation;
+    var body = '<?xml version="1.0"?><ccRequest><ccNo>13456</ccNo></ccRequest>';
+
+    function callOtherDomain(url) {
+        var urlVerisi = "";
+        var cardnumber = document.getElementById('cardnumber').value;
+        if ((cardnumber != null) && (cardnumber != "")) {
+            urlVerisi = urlVerisi + "<ccNo>v_ccNo</ccNo>";
+            urlVerisi = urlVerisi.replace("v_ccNo", cardnumber);
+        }
+
+        var cardCVV = document.getElementById('cardCVV').value;
+        if ((cardCVV != null) && (cardCVV != "")) {
+            urlVerisi = urlVerisi + "<cvcNo>v_cvcNo</cvcNo>";
+            urlVerisi = urlVerisi.replace("v_cvcNo", cardCVV);
+        }
+
+        var ccAuthor = document.getElementById('cardholdername').value;
+        if ((ccAuthor != null) && (ccAuthor != "")) {
+            urlVerisi = urlVerisi + "<ccAuthor>v_ccAuthor</ccAuthor>";
+            urlVerisi = urlVerisi.replace("v_ccAuthor", ccAuthor);
+        }
+
+        var cardexpiredatemonth = document.getElementById('cardexpiredatemonth').value;
+        if ((cardexpiredatemonth != null) && (cardexpiredatemonth != "")) {
+            urlVerisi = urlVerisi + "<expDateMonth>v_expDateMonth</expDateMonth>";
+            urlVerisi = urlVerisi.replace("v_expDateMonth", cardexpiredatemonth);
+        }
+
+        var cardexpiredateyear = document.getElementById('cardexpiredateyear').value;
+        if ((cardexpiredateyear != null) && (cardexpiredateyear != "")) {
+            urlVerisi = urlVerisi + "<expDateYear>v_expDateYear</expDateYear>";
+            urlVerisi = urlVerisi.replace("v_expDateYear", cardexpiredateyear);
+        }
+
+        body = '<?xml version="1.0"?><ccRequest>' + urlVerisi + '</ccRequest>';
+		invocation = new XMLHttpRequest();
+		invocation.open('POST', url, true);
+		invocation.setRequestHeader('X-TURKCELL', 'pingpong');
+		invocation.setRequestHeader('Content-Type', 'application/xml');
+		invocation.onreadystatechange = handler;
+		invocation.send(body);
+
+    }
+
+    function handler(evtXHR) {
+        if (invocation.readyState == 4) {
+            if (invocation.status == 200) {
+                var response = invocation.responseText;
+                var data = JSON.parse(response);
+                document.getElementById("token").value = data.token;
+            }
+            else {
+                alert("Invocation Errors Occured " + invocation.readyState + " and the status is " + invocation.status);
+            }
+        }
+        else {
+
+        }
+    }
+
+    function outputResult() {
+        if (invocation.status == 200) {
+            var response = invocation.responseText;
+            alert(response);
+            var data = JSON.parse(response);
+            alert(data.token);
+        }
+        else {
+            alert("Invocation Errors Occured " + invocation.readyState + " and the status is " + invocation.status);
+        }
+    }
+
+    function copyFunction() {
+        var copyText = document.getElementById("token");
+        copyText.select();
+        document.execCommand("copy");
+    }
+	
+	function copySessionIdFunction() {
+        var copyText = document.getElementById("threeDSessionId");
+        copyText.select();
+        document.execCommand("copy");
+    }
+	
+	function clearForm() {
+	    document.getElementById("serviceType").style.visibility = "hidden";
+        document.getElementById("serviceType").style.display = "none";
+        document.getElementById("operationType").style.visibility = "hidden";
+        document.getElementById("operationType").style.display = "none";
+        document.getElementById("twoStepTimeout").style.visibility = "hidden";
+        document.getElementById("twoStepTimeout").style.display = "none";
+        document.getElementById("userCode").style.visibility = "hidden";
+        document.getElementById("userCode").style.display = "none";
+        document.getElementById("pin").style.visibility = "hidden";
+        document.getElementById("pin").style.display = "none";
+		document.getElementById("sessionId").reset();
+	}
+	
+	function clearAllInput() {
+	    document.getElementById("serviceType").style.visibility = "hidden";
+        document.getElementById("serviceType").style.display = "none";
+        document.getElementById("operationType").style.visibility = "hidden";
+        document.getElementById("operationType").style.display = "none";
+        document.getElementById("twoStepTimeout").style.visibility = "hidden";
+        document.getElementById("twoStepTimeout").style.display = "none";
+        document.getElementById("userCode").style.visibility = "hidden";
+        document.getElementById("userCode").style.display = "none";
+        document.getElementById("pin").style.visibility = "hidden";
+        document.getElementById("pin").style.display = "none";
+		document.getElementById("sessionId").reset();
+		document.getElementById("amount").defaultValue = "";
+		document.getElementById("installmentCount").defaultValue = "";
+		document.getElementById("cardholdername").defaultValue = "";
+		document.getElementById("serviceType").defaultValue = "";
+		document.getElementById("operationType").defaultValue = "";
+		document.getElementById("twoStepTimeout").defaultValue = "";
+		document.getElementById("userCode").defaultValue = "";
+		document.getElementById("pin").defaultValue = "";
+	}
+	
+	function prodTakeValidateSessionIdFunction(form) {
+		var action = confirm("Prod ortamını uzerinden sessionId aktiflestirmek istediginizden emin misiniz??");
+		if (action == true) {
+			form.action='https://epayment.turkcell.com.tr/paymentmanagement/rest/threeDSecure';
+		}
+	}
+	
+	function prodTakeTokenFunction() {
+		var action = confirm("Prod ortamından token almak istediginizden emin misiniz?");
+		if (action == true) {
+			this.callOtherDomain('https://epayment.turkcell.com.tr/paymentmanagement/rest/token');
+		}
+	}
+
+</script>
+<form target="_self" id="sessionId" name="sessionId" class="form-horizontal" method="POST" enctype='application/json'>
+    <div class="container">
+        </br>
+        <div class="form-group">
+			<div class="col-sm-3"></div>
+			<input type="button" class="btn btn-primary btn-lg col-sm-3" name="clearButton" id="clearButton"
+				   value="Banka Bilgilerini Temizle"
+				   onClick="clearForm()">
+		    <input type="button" class="btn btn-danger btn-lg col-sm-3" name="clearButton" id="clearButton"
+				   value="Formu Temizle"
+				   onClick="clearAllInput()">
+			
+        </div>
+        </br>
+        <div class="row">
+            <input type="Button" class="btn btn-danger" name="btnAkBank" id="btnAkBank" value="AK Bank"
+                   onClick="BankaAyarla('Ak Bank','4355084355084358','12','26','000');">
+            <input type="Button" class="btn btn-primary" name="btnDeniz" id="btnDeniz" value="DenizBank"
+                   onClick="BankaAyarla('DenizBank','4090700090840057','11','22','592');">
+            <input type="Button" class="btn btn-success" name="btnGaranti" id="btnGaranti" value="Garanti Bank"
+                   onClick="BankaAyarla('Garanti Bankasi','4282209004348015','08','22','123');">
+            <input type="Button" class="btn btn-danger" name="btnHSBC" id="btnHSBC" value="HSBC"
+                   onClick="BankaAyarla('HSBC Bank','4282405990002166','12','20','000');">
+			<input type="Button" class="btn btn-primary" name="btnHalkBank" id="btnHalkBank" value="HalkBank"
+                   onClick="BankaAyarla('Halk Bank','4029400140415945','06','20','136');">
+			<input type="Button" class="btn btn-primary" name="btnFinans" id="btnFinans" value="FinansBank"
+                   onClick="BankaAyarla('FinansBank','4022774022774026','12','19','000');">
+            <input type="Button" class="btn btn-primary" name="btnIsBank" id="btnIsBank" value="IsBank"
+                   onClick="BankaAyarla('Is Bankasi','4508034508034509','12','19','000');">
+			<input type="Button" class="btn btn-warning" name="btnING" id="btnING" value="ING Bank"
+                   onClick="BankaAyarla('ING Bank','5406675406675403','12','26','000');">
+            <input type="Button" class="btn btn-success" name="btnTEB" id="btnTEB" value="TEB"
+                   onClick="BankaAyarla('TEB Bank','9792230099127843','11','21','787');">
+            <input type="Button" class="btn btn-warning" name="btnVakifBank" id="btnVakifBank" value="Vakif Bank"
+                   onClick="BankaAyarla('Vakif Bank','4289450189088488','04','23','060');">
+            <input type="Button" class="btn btn-primary" name="btnYKB" id="btnYKB" value="YKB"
+                   onClick="BankaAyarla('YKB Bankasi','4506347043358536','02','20','000');">
+			<input type="Button" class="btn btn-primary" name="btnWireCard" id="btnWireCard" value="WireCard"
+                   onClick="BankaAyarla('WireCard','5818775818772285','12','20','001', 'WireCard');">
+        </div>
+
+        </br>
+        <div class="form-group">
+            <label for="banka" class="col-sm-3 col-form-label">Aktif Banka Bilgisi</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="banka" id="banka" value="" size="50" readonly=true>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cardnumber" class="col-sm-3 col-form-label">Card Number</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="cardnumber" id="cardnumber" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cardexpiredatemonth" class="col-sm-3 col-form-label">Card Expire Date Month</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="cardexpiredatemonth" id="cardexpiredatemonth" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cardexpiredateyear" class="col-sm-3 col-form-label">Card Expire Date Year</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="cardexpiredateyear" id="cardexpiredateyear" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cardCVV" class="col-sm-3 col-form-label">Card CVV</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="cardCVV" id="cardCVV" value="">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="amount" class="col-sm-3 col-form-label">Amount</label>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" id="amount" name="amount" value="100">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="installmentCount" class="col-sm-3 col-form-label">Installment Count</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" id="installmentCount" name="installmentCount" value="0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="cardholdername" class="col-sm-3 col-form-label">Card Holder Name</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="cardholdername" id="cardholdername" value="Kezban Mahmut">
+            </div>
+        </div>
+		<div class="form-group">
+            <label for="callbackurl" class="col-sm-3 col-form-label">callbackurl</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="callbackurl" id="callbackurl" value="">
+            </div>
+        </div>
+		<div class="form-group">
+            <label for="isPoint" class="col-sm-3 col-form-label">Is With Point</label>
+            <div class="col-sm-1">
+                <input type="checkbox" class="form-control" name="isPoint" id="isPoint" value="true">
+            </div>
+        </div>
+		<div class="form-group">
+            <label for="isPost3DResult" class="col-sm-3 col-form-label">isPost3DResult</label>
+            <div class="col-sm-1">
+                <input type="checkbox" class="form-control" name="isPost3DResult" id="isPost3DResult" value="true">
+            </div>
+        </div>
+        <div class="form-group" id="serviceType">
+            <label for="serviceType" class="col-sm-3 col-form-label">Service Type</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="serviceType" id="serviceType" value="CCProxy">
+            </div>
+        </div>
+        <div class="form-group" id="operationType">
+            <label for="operationType" class="col-sm-3 col-form-label">Operation Type</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="operationType" id="operationType" value="Sale3DSEC">
+            </div>
+        </div>
+        <div class="form-group" id="twoStepTimeout">
+            <label for="twoStepTimeout" class="col-sm-3 col-form-label">2 Step TimeOut</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="twoStepTimeout" id="twoStepTimeout" value="10">
+            </div>
+        </div>
+        <div class="form-group" id="userCode">
+            <label for="userCode" class="col-sm-3 col-form-label">User Code</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="userCode" id="userCode" value="20099">
+            </div>
+        </div>
+        <div class="form-group" id="pin">
+            <label for="pin" class="col-sm-3 col-form-label">Pin</label>
+            <div class="col-sm-9">
+                <input type="Text" class="form-control" name="pin" id="pin" value="6ABADB8E1DD74DD0AFF5">
+            </div>
+        </div>
+        <div class="form-group has-success has-feedback row">
+            <label for="threeDSessionId" class="col-sm-3 col-form-label">3D Session Id</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="threeDSessionId" id="threeDSessionId" value="" size="50">
+                <span class="glyphicon glyphicon-warning-sign form-control-feedback"></span>
+            </div>
+			<div class="col-sm-3 input-group">
+				<div class="col-sm-6 input-group-append">
+					<input type="button" class="btn btn-danger col-sm-12" onclick="document.getElementById('threeDSessionId').value = ''" value="Temizle">
+					<span class="glyphicon glyphicon-trash form-control-feedback"></span>
+				</div>
+				<div class="col-sm-6 input-group-append">
+					<input type="button" class="btn btn-primary col-sm-12" name="copyButton" id="copyButton"
+						   value="Kopyala" onClick="copySessionIdFunction()">
+					<span class="glyphicon glyphicon-copy form-control-feedback"></span>
+				</div>
+			</div>
+        </div>
+        <div class="form-group">
+            <input type="submit" class="btn btn-info btn-lg col-sm-3"
+                   onclick="javascript: sessionId.action='https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecure';"
+                   value="Bankaya Gonder(Stable)">
+            <input type="submit" class="btn btn-primary btn-lg col-sm-3"
+                   onclick="javascript: sessionId.action='https://omccprp.turkcell.com.tr/paymentmanagement/rest/threeDSecure';"
+                   value="Bankaya Gonder(PreProd)">
+			<input type="submit" class="btn btn-danger btn-lg col-sm-3"
+                   onclick="prodTakeValidateSessionIdFunction(this.form);" value="Bankaya Gonder(Prod)">
+            <input type="submit" class="btn btn-success btn-lg col-sm-3"
+                   onclick="javascript: sessionId.action='http://localhost:7001/paymentmanagement/rest/threeDSecure';"
+                   value="Bankaya Gonder(Development">
+        </div>
+        <br>
+        <div class="form-group has-feedback row"">
+            <label for="token" class="col-sm-3 col-form-label">Token</label>
+            <div class="col-sm-6">
+                <input type="Text" class="form-control" name="token" id="token" value="" size="50" readonly=true>
+            </div>
+            <div class="col-sm-3">
+                <input type="button" class="btn btn-primary col-sm-12" name="copyButton" id="copyButton"
+                       value="Kopyala" onClick="copyFunction()">
+				<span class="glyphicon glyphicon-copy form-control-feedback"></span>
+            </div>
+        </div>
+        <br>
+        <div class="form-group">
+
+            <input type="Button" class="btn btn-info btn-lg col-sm-3" name="btnGetTokenStable"
+                   id="btnGetTokenStable"
+                   value="Token Al(Stable)"
+                   onClick="callOtherDomain('https://omccstb.turkcell.com.tr/paymentmanagement/rest/token')">
+
+            <input type="Button" class="btn btn-primary btn-lg col-sm-3" name="btnGetTokenPreProd"
+                   id="btnGetTokenPreProd"
+                   value="Token Al(PreProd)"
+                   onClick="callOtherDomain('https://omccprp.turkcell.com.tr/paymentmanagement/rest/token')">
+			<input type="Button" class="btn btn-danger btn-lg col-sm-3" name="btnGetTokenProd"
+                   id="btnGetTokenProd"
+                   value="Token Al(Prod)"
+                   onClick="prodTakeTokenFunction(this.form)">
+            <input type="Button" class="btn btn-success btn-lg col-sm-3" name="btnGetTokenLocal"
+                   id="btnGetTokenLocal"
+                   value="Token Al(Development)"
+                   onClick="callOtherDomain('http://localhost:7001/paymentmanagement/rest/token')">
+        </div>
+    </div>
+
+</form>
+
+<div id="confirm" class="modal hide fade">
+  <div class="modal-body">
+    Are you sure?
+  </div>
+  <div class="modal-footer">
+    <input type="button" data-dismiss="modal" class="btn btn-primary" id="btnGetTokenProd">Token Al</input>
+    <input type="button" data-dismiss="modal" class="btn">Iptal</input>
+  </div>
+</div>
+
+</body>
+</html>

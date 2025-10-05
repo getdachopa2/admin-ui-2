@@ -3,6 +3,8 @@ import express from 'express';
 import { Pool } from 'pg';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { chromium } from 'playwright';
+
 
 dotenv.config();
 
@@ -170,4 +172,55 @@ app.get('/api/health', (req, res) => {
 
 app.listen(port, '127.0.0.1', () => {
   console.log(`API Server running on http://127.0.0.1:${port}`);
+});
+
+
+app.post('/api/3ds/sim', async (req, res) => {
+  try {
+    const {
+      acsUrl,
+      otp,
+      challengeSelector = 'input[name=otp], input[type=password], #password',
+      submitSelector    = 'button[type=submit], #submit, text=Complete',
+      successPattern    = 'callback|pares|cres',
+      timeoutMs         = 30000,
+      authToken         // opsiyonel: basit koruma
+    } = req.body || {};
+
+    // Basit auth (opsiyonel)
+    if (process.env.WORKER_TOKEN && authToken !== process.env.WORKER_TOKEN) {
+      return res.status(401).json({ status: 'error', message: 'unauthorized' });
+    }
+    if (!acsUrl || !otp) {
+      return res.status(400).json({ status: 'error', message: 'acsUrl ve otp zorunlu' });
+    }
+
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+
+    try {
+      await page.goto(acsUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+
+      // OTP alanını bul ve doldur
+      const otpLocator = page.locator(challengeSelector);
+      await otpLocator.first().waitFor({ timeout: 5000 });
+      await otpLocator.first().fill(String(otp));
+
+      // Submit et
+      const submitBtn = page.locator(submitSelector);
+      await submitBtn.first().click();
+
+      // Callback/redirect’i bekle
+      await page.waitForURL(new RegExp(successPattern, 'i'), { timeout: timeoutMs });
+      const finalUrl = page.url();
+
+      await browser.close();
+      return res.json({ status: 'ok', finalUrl });
+    } catch (e) {
+      await browser.close();
+      return res.status(500).json({ status: 'error', message: e.message || String(e) });
+    }
+  } catch (err) {
+    return res.status(500).json({ status: 'error', message: err.message || String(err) });
+  }
 });
