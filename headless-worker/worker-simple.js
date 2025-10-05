@@ -1,17 +1,6 @@
-import express from 'express';
-import puppeteer from 'puppeteer';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import fs from 'fs';
-
-// Enhanced logging
-const logFile = './worker.log';
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
-  fs.appendFileSync(logFile, logMessage + '\n');
-}
+const express = require('express');
+const puppeteer = require('puppeteer');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -25,7 +14,7 @@ async function performAutomation({ threeDSessionId, cardData, otp, challengeSele
   let page = null;
   
   try {
-    log('Starting 3D automation...');
+    console.log('Starting 3D automation...');
     browser = await puppeteer.launch({
       headless: true,
       args: [
