@@ -5,6 +5,14 @@ import puppeteer from 'puppeteer';
 
 // Diagnostic helpers: surface uncaught errors so PowerShell doesn't hide them
 console.log('worker.js starting - diagnostics enabled');
+const SUBMIT_SELECTORS = [
+  'button', 'input[type=submit]', 'a[href*="3d"]', 'a[href*="auth"]',
+  '[onclick]', '[role=button]', 'input[type=button]',
+  'button[type=button]', 'button[type=submit]',
+  'a[href*="secure"]', 'a[href*="payment"]', '[class*="submit"]',
+  '[class*="button"]', '[class*="btn"]', 'form[action*="3d"] input[type=submit]'
+];
+
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT_EXCEPTION:', err && (err.stack || err.message || err));
   process.exit(1);
@@ -17,6 +25,89 @@ const app = express();
 const PORT = 3002;
 
 app.use(express.json());
+
+// Helper function to extract sessionId from page or URL
+async function extractSessionId(page, finalUrl) {
+  try {
+    // Try to extract from URL first
+    const url = new URL(finalUrl);
+    const sessionId = url.searchParams.get('threeDSessionId') || 
+                     url.searchParams.get('sessionid') ||
+                     url.searchParams.get('sessionId');
+    if (sessionId) return sessionId;
+
+    // Try to find it in the page content
+    const sessionIdFromPage = await page.evaluate(() => {
+      // Look for common input fields that might contain sessionId
+      const selectors = [
+        'input[name*=sessionId]',
+        'input[name*=threeDSessionId]',
+        'input[name*=sessionid]',
+        '#threeDSessionId',
+        '#sessionId'
+      ];
+      
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) return element.value;
+      }
+      
+      // Try to find it in any element's text content
+      const sessionIdPattern = /['"]([\w-]{8,})['"]/;
+      const text = document.body.textContent;
+      const match = text.match(sessionIdPattern);
+      return match ? match[1] : null;
+    });
+
+    return sessionIdFromPage;
+  } catch (e) {
+    console.error('Error extracting sessionId:', e);
+    return null;
+  }
+}
+
+// Helper function to validate 3D session
+async function validate3DSession(sessionId) {
+  const validationUrl = 'https://omccstb.turkcell.com.tr/omcc/resources/threedmanagementrest/get3DSessionResult';
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+
+  // TODO: These should come from environment variables or configuration
+  const payload = {
+    header: {
+      transactionId: `3D-${Date.now()}`,
+      application: "ADMINUI",
+      transactionDate: new Date().toISOString(),
+      userName: process.env.API_USERNAME || "test_user",
+      userId: process.env.API_USERID || "test_id",
+      password: process.env.API_PASSWORD || "test_pass",
+      operationName: "validate3D"
+    },
+    channelId: "999046",
+    threeDSessionId: sessionId
+  };
+
+  try {
+    const response = await fetch(validationUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Validation request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('3D session validation request failed:', error);
+    throw error;
+  }
+}
 
 // Add a minimal Content-Security-Policy that allows same-origin connections.
 // This prevents strict defaults (default-src 'none') from blocking DevTools' local fetches
@@ -80,23 +171,377 @@ app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
 // waits for navigation, and returns { success: boolean, finalUrl }
 async function performAutomation({ launchUrl, otp, challengeSelector, submitSelector, successPattern, timeout = 20000 }) {
   let browser = null;
+  let page = null;
+  let popupPage = null;
+  
   try {
     console.log('Launching browser...');
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-    const page = await browser.newPage();
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--disable-popup-blocking'  // Allow popups for bank 3D pages
+      ]
+    });
+    page = await browser.newPage();
+    
+    // Set up new tab/popup detection
+    browser.on('targetcreated', async target => {
+      console.log('New target created:', target.url());
+      if (target.type() === 'page') {
+        const newPage = await target.page();
+        if (newPage && newPage !== page) {
+          console.log('New page detected, could be bank 3D page');
+        }
+      }
+    });
+
+    // More tolerant selector sets for OTP and submit
+    const otpSelectors = [
+      challengeSelector,
+      'input[name=otp]',
+      'input[name=OTP]',
+      'input[type=text][name*=otp]',
+      'input[type=text][name*=OTP]',
+      'input[name=smsCode]',
+      'input[name=SMS_OTP]',
+      'input[name=sms]',
+      // Add selectors for hidden OTP fields that might auto-populate
+      'input[type=hidden][name*=otp]',
+      'input[type=hidden][name*=OTP]'
+    ];
+
+    const submitSelectors = [
+      submitSelector,
+      'button[type=submit]',
+      'input[type=submit]',
+      'button:contains("Submit")',
+      'button:contains("Gönder")',
+      'button.submit-button'
+    ];
+    
     await page.setBypassCSP(true);
+    await page.setDefaultTimeout(30000); // Increase default timeout
+
+    // Set realistic browser headers
+    await page.setExtraHTTPHeaders({
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
+      'Cache-Control': 'max-age=0',
+      'Sec-Ch-Ua': '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
+      'Sec-Ch-Ua-Mobile': '?0',
+      'Sec-Ch-Ua-Platform': '"Windows"',
+      'Upgrade-Insecure-Requests': '1',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0'
+    });
+
+    // Set cookies that might be expected by the payment pages
+    await page.setCookie(
+      { name: '_ym_uid', value: '1730443215166404466', domain: '.turkcell.com.tr' },
+      { name: '_ym_d', value: '1730443215', domain: '.turkcell.com.tr' },
+      { name: 'JSESSIONID', value: Math.random().toString(36).substring(7), domain: '.turkcell.com.tr', httpOnly: true }
+    );
+
+    // Set default browser info for 3D Secure
+    await page.evaluateOnNewDocument(() => {
+      // Override navigator properties
+      Object.defineProperty(navigator, 'language', { get: () => 'tr-TR' });
+      Object.defineProperty(navigator, 'languages', { get: () => ['tr-TR', 'tr', 'en-US', 'en'] });
+      Object.defineProperty(navigator, 'userAgent', { get: () => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' });
+      Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
+      
+      // Override screen properties
+      Object.defineProperty(screen, 'colorDepth', { get: () => 24 });
+      Object.defineProperty(screen, 'pixelDepth', { get: () => 24 });
+      Object.defineProperty(screen, 'height', { get: () => 1080 });
+      Object.defineProperty(screen, 'width', { get: () => 1920 });
+      Object.defineProperty(screen, 'availHeight', { get: () => 1040 });
+      Object.defineProperty(screen, 'availWidth', { get: () => 1920 });
+      
+      // Additional browser capabilities
+      Object.defineProperty(navigator, 'javaEnabled', { value: () => false });
+      Object.defineProperty(navigator, 'cookieEnabled', { get: () => true });
+      
+      // Override Date.prototype.getTimezoneOffset
+      const originalGetTimezoneOffset = Date.prototype.getTimezoneOffset;
+      Date.prototype.getTimezoneOffset = function() {
+        return -180; // UTC+3 for Turkey
+      };
+      
+      // Add global functions expected by some 3D Secure pages
+      window.hideAndSubmit = function(formId) {
+        const form = document.getElementById(formId);
+        if (form) {
+          console.log('Auto-submitting form via hideAndSubmit:', formId);
+          setTimeout(() => form.submit(), 10);
+        }
+      };
+      
+      window.hideAndSubmitTimed = function(formId) {
+        setTimeout(() => window.hideAndSubmit(formId), 10);
+      };
+    });
 
     console.log(`Navigating to launchUrl: ${launchUrl}`);
     await page.goto(launchUrl, { waitUntil: 'networkidle2' });
 
-    // First try: the OTP input is on the landing page
+    // First try: check if there's an auto-submit flow or OTP input on landing page
     try {
-      console.log(`Waiting for OTP input selector on main page: "${challengeSelector}"`);
-      await page.waitForSelector(challengeSelector, { timeout: 15000 });
-      console.log(`Typing OTP on main page: "${otp}"`);
-      await page.type(challengeSelector, otp);
-      console.log(`Clicking submit button on main page: "${submitSelector}"`);
-      await page.click(submitSelector);
+      // Handle Akbank/BKM auto-submit flow and SUAT forms
+      const autoSubmitSelectors = [
+        'form[name="threeDSServerWebFlowStartForm"]',  // BKM specific
+        'form[action*="resultFlow"]',  // BKM/Akbank form
+        'form[name*="autoSubmit"]',
+        'form[name*="auto_submit"]',
+        'input[type="hidden"][name*="autoSubmit"]',
+        'meta[http-equiv="refresh"]',
+        'form[action*="3d"][name*="form"]',
+        'form[action*="secure"][name*="form"]',
+        'script[type="text/javascript"]',
+        'input[type="hidden"][name*="PaReq"]',
+        'input[type="hidden"][name*="MD"]',
+        'form[name*="3DForm"]',
+        'form[id="sessionId"]',  // SUAT specific form
+        'form[name="sessionId"]'  // SUAT specific form
+      ];
+
+      // Track URLs and success indicators
+      const successPatterns = {
+        urls: [
+          '/threeDSecureResult',  // Turkcell callback
+          'callback',
+          'pares',
+          'cres',
+          'omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecureResult'
+        ],
+        params: {
+          mdStatus: ['1'],  // Successful authentication
+          responseCode: ['VPS-0000', '0000']  // Success codes
+        }
+      };
+
+      let navigationCount = 0;
+      const maxNavigations = 5;  // Prevent infinite redirects
+
+      while (navigationCount < maxNavigations) {
+        navigationCount++;
+        console.log(`Navigation ${navigationCount}, current URL: ${page.url()}`);
+
+        // Wait for network activity to settle
+        await page.waitForNetworkIdle({ idleTime: 1000 }).catch(() => {});
+
+        // Check for success indicators
+        const currentUrl = page.url();
+        
+        // First check URL patterns
+        const isSuccessUrl = successPatterns.urls.some(pattern => currentUrl.includes(pattern));
+        
+        if (isSuccessUrl) {
+          console.log(`Success URL detected: ${currentUrl}`);
+          
+          // Then check response parameters
+          const pageSuccess = await page.evaluate((patterns) => {
+            // Function to get URL parameters
+            const getUrlParams = (url) => {
+              try {
+                return Object.fromEntries(new URL(url).searchParams);
+              } catch (e) {
+                return {};
+              }
+            };
+
+            // Function to get form fields
+            const getFormFields = () => {
+              const fields = {};
+              document.querySelectorAll('input[type="hidden"]').forEach(input => {
+                fields[input.name] = input.value;
+              });
+              return fields;
+            };
+
+            // Collect all possible parameters
+            const params = {
+              ...getUrlParams(window.location.href),
+              ...getFormFields()
+            };
+
+            console.log('Checking success parameters:', params);
+
+            // Check all required success parameters
+            for (const [key, validValues] of Object.entries(patterns.params)) {
+              if (params[key] && validValues.includes(params[key])) {
+                console.log(`Found success indicator: ${key}=${params[key]}`);
+                return true;
+              }
+            }
+
+            return false;
+          }, successPatterns);
+
+          if (pageSuccess) {
+            console.log('Success parameters verified');
+            return { success: true, finalUrl: currentUrl };
+          } else {
+            console.log('URL matches but success parameters not found, continuing...');
+          }
+        }
+
+        // Handle potential forms on the page
+        const formHandled = await page.evaluate((selectors) => {
+          // First try: SUAT specific form handling
+          const suatForm = document.querySelector('form[id="sessionId"]') || document.querySelector('form[name="sessionId"]');
+          if (suatForm) {
+            console.log('Found SUAT form, setting up for 3D submission');
+            
+            // Set the form action to stable environment
+            suatForm.action = 'https://omccstb.turkcell.com.tr/paymentmanagement/rest/threeDSecure';
+            
+            // Make sure the form target is set to handle new windows/tabs
+            if (suatForm.target === '_self' || !suatForm.target) {
+              suatForm.target = '_blank'; // This will open in new tab which we can detect
+            }
+            
+            console.log('Submitting SUAT form to bank');
+            suatForm.submit();
+            return true;
+          }
+          
+          // Second try: Akbank/BKM specific flow
+          if (typeof hideAndSubmit === 'function') {
+            const form = document.querySelector('form[name="threeDSServerWebFlowStartForm"]');
+            if (form) {
+              console.log('Found BKM form, collecting browser info');
+              
+              // Fill browser info fields if present
+              const fields = {
+                browserColorDepth: 24,
+                browserScreenHeight: 1080,
+                browserScreenWidth: 1920,
+                browserTZ: -180,  // Turkey timezone
+                browserJavascriptEnabled: true,
+                browserJavaEnabled: false,
+                browserLanguage: 'tr-TR'
+              };
+
+              Object.entries(fields).forEach(([name, value]) => {
+                const input = form.querySelector(`input[name="${name}"]`);
+                if (input) input.value = value;
+              });
+
+              // Submit using BKM's own function
+              const formId = form.id;
+              console.log('Using BKM hideAndSubmit for form:', formId);
+              hideAndSubmitTimed(formId);
+              return true;
+            }
+          }
+
+          // Third try: generic auto-submit forms
+          for (const selector of selectors) {
+            const form = document.querySelector(selector);
+            if (form && !form.classList.contains('submitted')) {
+              console.log('Found generic auto-submit form:', selector);
+              form.classList.add('submitted');
+              form.submit();
+              return true;
+            }
+          }
+
+          return false;
+        }, autoSubmitSelectors);
+
+        if (formHandled) {
+          console.log('Form was handled, waiting for navigation or new tab');
+          
+          // Wait for either navigation in current page or new tab creation
+          const navigationPromise = page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => null);
+          const newTabPromise = new Promise(resolve => {
+            const timeout = setTimeout(() => resolve(null), 10000);
+            browser.on('targetcreated', async target => {
+              clearTimeout(timeout);
+              const newPage = await target.page();
+              resolve(newPage);
+            });
+          });
+          
+          // Wait for either navigation or new tab
+          const result = await Promise.race([navigationPromise, newTabPromise]);
+          
+          if (result && result !== page) {
+            console.log('New tab/window opened for bank 3D page, switching to it');
+            page = result; // Switch to the new tab
+            await page.bringToFront();
+            await page.waitForLoadState?.('networkidle') || page.waitForTimeout(2000);
+          } else {
+            console.log('Navigation completed in same page');
+            await page.waitForTimeout(1000);  // Give extra time for any redirects
+          }
+          
+          continue;
+        }
+
+        // If no forms found/handled, break the loop
+        break;
+      }
+    } catch (e) {
+      console.log('Error in auto-submit flow:', e);
+    }
+
+    // If no auto-submit, try each OTP selector 
+    try {
+      let found = false;
+      for (const selector of otpSelectors) {
+        try {
+          console.log(`Trying OTP selector on main page: "${selector}"`);
+          const element = await page.waitForSelector(selector, { timeout: 5000 });
+          
+          // Check if element is visible or hidden
+          const isHidden = await page.evaluate(el => {
+            const style = window.getComputedStyle(el);
+            return style.display === 'none' || style.visibility === 'hidden' || el.type === 'hidden';
+          }, element);
+
+          if (isHidden) {
+            console.log(`Found hidden OTP field (${selector}), assuming auto-populated`);
+            found = true;
+            break;
+          }
+
+          console.log(`Found visible OTP field, typing OTP using selector: ${selector}`);
+          await page.type(selector, otp);
+          found = true;
+          break;
+        } catch (e) {
+          console.log(`Selector ${selector} not found, trying next...`);
+        }
+      }
+
+      if (!found) {
+        throw new Error('No OTP input found on main page');
+      }
+
+      // Try each submit selector
+      found = false;
+      for (const selector of submitSelectors) {
+        try {
+          console.log(`Trying submit selector: "${selector}"`);
+          await page.waitForSelector(selector, { timeout: 5000 });
+          console.log(`Clicking submit using selector: ${selector}`);
+          await page.click(selector);
+          found = true;
+          break;
+        } catch (e) {
+          console.log(`Submit selector ${selector} not found, trying next...`);
+        }
+      }
+
+      if (!found) {
+        throw new Error('No submit button found on main page');
+      }
     } catch (eMain) {
       // If main page doesn't have the selector, it might open a popup/window for bank auth
       console.log('OTP selector not found on main page, attempting to follow popup flow');
@@ -104,11 +549,45 @@ async function performAutomation({ launchUrl, otp, challengeSelector, submitSele
       // Try to click the submit/redirect button and wait for a popup
       let popupPage = null;
       try {
-        const [popup] = await Promise.all([
-          page.waitForEvent('popup', { timeout: 5000 }).catch(() => null),
-          page.click(submitSelector).catch(() => null),
-        ]);
-        popupPage = popup || null;
+        // More reliable popup detection
+        const popupPromise = new Promise(resolve => {
+          browser.on('targetcreated', async target => {
+            const newPage = await target.page();
+            if (newPage) resolve(newPage);
+          });
+        });
+
+        // Try clicking any visible button that might trigger popup
+        const buttonSelectors = [
+          'button', 
+          'input[type="submit"]', 
+          'a[href*="3d"]', 
+          'a[href*="auth"]',
+          '[onclick]', 
+          '[role="button"]', 
+          'input[type="button"]',
+          'button[type="button"]', 
+          'button[type="submit"]',
+          'a[href*="secure"]', 
+          'a[href*="payment"]', 
+          'form input[type="submit"]'
+        ];
+
+        for (const selector of buttonSelectors) {
+          const elements = await page.$$(selector);
+          for (const element of elements) {
+            if (await element.isVisible()) {
+              await element.click().catch(() => {});
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+        }
+
+        // Wait for popup with timeout
+        popupPage = await Promise.race([
+          popupPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Popup timeout')), 10000))
+        ]).catch(() => null);
       } catch (clickErr) {
         console.warn('Error while attempting to click and wait for popup:', clickErr);
       }
@@ -129,11 +608,45 @@ async function performAutomation({ launchUrl, otp, challengeSelector, submitSele
       console.log('Following popup page at:', popupPage.url());
       try {
         await popupPage.bringToFront();
-        await popupPage.waitForSelector(challengeSelector, { timeout: 15000 });
-        console.log(`Typing OTP in popup: "${otp}"`);
-        await popupPage.type(challengeSelector, otp);
-        console.log(`Clicking submit button in popup: "${submitSelector}"`);
-        await popupPage.click(submitSelector);
+
+        // Try OTP selectors in popup
+        let found = false;
+        for (const selector of otpSelectors) {
+          try {
+            console.log(`Trying OTP selector in popup: "${selector}"`);
+            await popupPage.waitForSelector(selector, { timeout: 5000 });
+            console.log(`Found and typing OTP in popup using selector: ${selector}`);
+            await popupPage.type(selector, otp);
+            found = true;
+            break;
+          } catch (e) {
+            console.log(`Popup selector ${selector} not found, trying next...`);
+          }
+        }
+
+        if (!found) {
+          throw new Error('No OTP input found in popup');
+        }
+
+        // Try submit selectors in popup
+        found = false;
+        for (const selector of submitSelectors) {
+          try {
+            console.log(`Trying submit selector in popup: "${selector}"`);
+            await popupPage.waitForSelector(selector, { timeout: 5000 });
+            console.log(`Clicking submit in popup using selector: ${selector}`);
+            await popupPage.click(selector);
+            found = true;
+            break;
+          } catch (e) {
+            console.log(`Popup submit selector ${selector} not found, trying next...`);
+          }
+        }
+
+        if (!found) {
+          throw new Error('No submit button found in popup');
+        }
+
         // Wait for navigation in popup
         await popupPage.waitForNavigation({ waitUntil: 'networkidle2', timeout });
       } catch (popupErr) {
@@ -147,8 +660,61 @@ async function performAutomation({ launchUrl, otp, challengeSelector, submitSele
 
     const finalUrl = page.url();
     console.log(`Final URL after redirection: ${finalUrl}`);
-    const isSuccess = new RegExp(successPattern, 'i').test(finalUrl);
-    return { success: isSuccess, finalUrl };
+    
+    // Extract sessionId from URL or response
+    const sessionId = await extractSessionId(page, finalUrl);
+    if (!sessionId) {
+      console.error('Could not extract sessionId from response');
+      return { success: false, error: 'Missing sessionId' };
+    }
+
+    // Wait a moment for session to be fully processed
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Validate 3D session
+    try {
+      const validationResult = await validate3DSession(sessionId);
+      console.log('3D Session validation result:', validationResult);
+      
+      if (validationResult?.threeDOperationResult?.threeDResult === '0') {
+        console.log('3D validation successful, proceeding with payment');
+        
+        // Include the successful validation in the response
+        return { 
+          success: true, 
+          finalUrl,
+          sessionId,
+          validationResult,
+          validationStatus: {
+            code: validationResult.threeDOperationResult.threeDResult,
+            description: validationResult.threeDOperationResult.threeDResultDescription
+          }
+        };
+      } else {
+        console.error('3D validation failed:', validationResult);
+        return { 
+          success: false, 
+          error: validationResult?.threeDOperationResult?.threeDResultDescription || 'Validation failed',
+          sessionId,
+          validationResult,
+          validationStatus: {
+            code: validationResult?.threeDOperationResult?.threeDResult,
+            description: validationResult?.threeDOperationResult?.threeDResultDescription
+          }
+        };
+      }
+    } catch (validationError) {
+      console.error('3D session validation error:', validationError);
+      return { 
+        success: false, 
+        error: String(validationError),
+        sessionId,
+        validationStatus: {
+          code: 'ERROR',
+          description: String(validationError)
+        }
+      };
+    }
   } catch (error) {
     console.error('Puppeteer automation error:', error);
     return { success: false, error: String(error) };
@@ -189,7 +755,17 @@ app.post('/simulate-3d', async (req, res) => {
     }
 
     const outcome = await performAutomation({ launchUrl: effectiveLaunch, otp, challengeSelector, submitSelector, successPattern });
-    await notifyN8N(outcome.success ? 'success' : 'fail', runKey, n8nCallbackBase);
+    
+    // Include validation result in the webhook callback
+    const webhookBody = {
+      status: outcome.success ? 'success' : 'fail',
+      runKey,
+      sessionId: outcome.sessionId,
+      validationResult: outcome.validationResult,
+      error: outcome.error
+    };
+
+    await notifyN8N(webhookBody.status, runKey, n8nCallbackBase, webhookBody);
   })();
 });
 
@@ -200,7 +776,7 @@ app.post('/run-sample', async (req, res) => {
   return res.json(outcome);
 });
 
-async function notifyN8N(status, runKey, n8nCallbackBase) {
+async function notifyN8N(status, runKey, n8nCallbackBase, data = {}) {
   const webhookPath = status === 'success' ? '/webhook/payment-test/3d/success' : '/webhook/payment-test/3d/fail';
 
   // Allow optional environment variable N8N_BASIC to provide basic auth credentials.
@@ -218,40 +794,57 @@ async function notifyN8N(status, runKey, n8nCallbackBase) {
     }
   }
 
-  // If the callback base looks like it's pointing to localhost/127.0.0.1 and we're running inside Docker,
-  // rewrite it to host.docker.internal so the container can reach the host service. This is a best-effort
-  // heuristic and only applied when host.docker.internal is available on the platform (Docker for Windows/Mac).
+  // Include validation data in request
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-RunKey': runKey
+  };
+  if (authHeader) {
+    headers['Authorization'] = authHeader;
+  }
+
+  // If the callback base has n8n hostname, rewrite it to host.docker.internal for Docker networking
   let callbackBase = n8nCallbackBase;
   try {
     const urlObj = new URL(n8nCallbackBase);
-    if ((urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') && process.env.USE_HOST_DOCKER_INTERNAL !== 'false') {
-      // prefer host.docker.internal if present; the network may not resolve on Linux unless specially configured
+    if (urlObj.hostname === 'n8n') {
       urlObj.hostname = 'host.docker.internal';
       callbackBase = urlObj.toString().replace(/\/$/, '');
-      console.log(`Rewrote n8nCallbackBase to host.docker.internal: ${callbackBase}`);
+      console.log(`Rewrote n8n hostname to host.docker.internal: ${callbackBase}`);
     }
   } catch (e) {
     // If parsing fails, fall back to the provided value
     console.warn('Invalid n8nCallbackBase URL, using raw value:', n8nCallbackBase);
   }
 
-  const url = `${callbackBase}${webhookPath}`;
+  // Append runKey as query param as well to support webhooks that expect it in the URL
+  let url = `${callbackBase}${webhookPath}`;
+  try {
+    const u = new URL(url);
+    u.searchParams.set('runKey', runKey);
+    url = u.toString();
+  } catch (e) {
+    // fallback: append manually
+    url = `${url}${url.includes('?') ? '&' : '?'}runKey=${encodeURIComponent(runKey)}`;
+  }
+
   console.log(`Notifying n8n at: ${url} with runKey: ${runKey}`);
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (authHeader) headers['Authorization'] = authHeader;
 
+    const payload = { runKey, reason: status === 'fail' ? 'automation-error' : 'automation-success' };
     const res = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ runKey, reason: status === 'fail' ? 'automation-error' : 'automation-success' }),
-      // short timeout from fetch is not available in global fetch; rely on underlying platform timeouts
+      body: JSON.stringify(payload),
     });
 
-    // Log non-2xx responses for easier debugging
+    const text = await res.text().catch(() => '<no-body>');
     if (!res.ok) {
-      const text = await res.text().catch(() => '<no-body>');
       console.error(`n8n notify returned ${res.status} ${res.statusText}: ${text}`);
+    } else {
+      console.log(`n8n notify succeeded: ${res.status} ${res.statusText}: ${text}`);
     }
   } catch (error) {
     console.error(`Failed to notify n8n at ${url}:`, error);
