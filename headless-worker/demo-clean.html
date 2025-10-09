@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KKB Admin - Demo Simülasyon</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #09090b; 
+      color: #fafafa;
+    }
+    
+    /* Layout */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar { background: #18181b; border-right: 1px solid #27272a; padding: 1rem; }
+    .main { padding: 1.5rem; overflow-y: auto; }
+    
+    /* Sidebar */
+    .sidebar-title { font-weight: 600; margin-bottom: 1rem; }
+    .nav-item { 
+      padding: 0.5rem 0.75rem; 
+      border-radius: 0.75rem; 
+      font-size: 0.875rem; 
+      color: #71717a; 
+      cursor: pointer; 
+      margin-bottom: 0.25rem;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fafafa; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .nav-divider { height: 1px; background: #27272a; margin: 0.5rem 0; }
+    
+    /* Page */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-subtitle { font-size: 0.875rem; color: #71717a; margin-bottom: 1.5rem; }
+    
+    /* Card */
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; }
+    .card-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.875rem; }
+    
+    /* Metrics */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .metric { text-align: center; padding: 1rem; }
+    .metric-value { font-size: 2rem; font-weight: 700; color: #10b981; }
+    .metric-label { font-size: 0.75rem; color: #71717a; margin-top: 0.25rem; }
+    
+    /* Buttons */
+    .btn { 
+      padding: 0.5rem 1rem; 
+      border-radius: 0.5rem; 
+      font-size: 0.875rem; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #10b981; color: white; }
+    .btn-primary:hover { background: #059669; }
+    .btn-secondary { background: #374151; color: white; }
+    .btn-secondary:hover { background: #4b5563; }
+    
+    /* Bank Grid */
+    .bank-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+      gap: 1rem; 
+      margin-bottom: 1rem;
+    }
+    .bank-card {
+      background: #18181b;
+      border: 2px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bank-card:hover { border-color: #374151; }
+    .bank-card.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    .bank-card.filling { 
+      animation: fillBank 0.5s ease-out;
+      border-color: #10b981; 
+      background: rgba(16, 185, 129, 0.2); 
+    }
+    .bank-name { font-weight: 600; margin-bottom: 0.25rem; }
+    .bank-meta { font-size: 0.75rem; color: #71717a; }
+    .bank-status { 
+      display: inline-block; 
+      width: 0.5rem; 
+      height: 0.5rem; 
+      border-radius: 50%; 
+      margin-right: 0.25rem; 
+    }
+    .bank-status.active { background: #10b981; }
+    .bank-status.warning { background: #f59e0b; }
+    
+    /* Modal */
+    .modal-overlay { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8); 
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal { 
+      background: #18181b; 
+      border: 1px solid #27272a; 
+      border-radius: 1rem; 
+      width: 90%; 
+      max-width: 900px; 
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header { 
+      padding: 1rem; 
+      border-bottom: 1px solid #27272a; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+    }
+    .modal-title { font-size: 1.125rem; font-weight: 600; }
+    .modal-close { 
+      background: none; 
+      border: none; 
+      color: #71717a; 
+      font-size: 1.5rem; 
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #fafafa; }
+    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+    .modal-footer { 
+      padding: 1rem; 
+      border-top: 1px solid #27272a; 
+      display: flex; 
+      justify-content: space-between;
+    }
+    
+    /* Wizard Steps */
+    .wizard-steps { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .wizard-step { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      padding: 0.5rem 0.75rem; 
+      border-radius: 0.75rem; 
+      background: #09090b; 
+      font-size: 0.75rem; 
+      font-weight: 500;
+    }
+    .wizard-step.active { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .wizard-step.completed { background: #27272a; color: #71717a; }
+    .wizard-step-num { 
+      width: 1.25rem; 
+      height: 1.25rem; 
+      border-radius: 50%; 
+      background: #27272a; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 0.65rem;
+    }
+    .wizard-step.active .wizard-step-num { background: #10b981; color: white; }
+    .wizard-step.completed .wizard-step-num { background: #10b981; color: white; }
+    
+    /* Form */
+    .form-group { margin-bottom: 1rem; }
+    .form-label { 
+      display: block; 
+      font-size: 0.75rem; 
+      font-weight: 500; 
+      color: #71717a; 
+      margin-bottom: 0.5rem;
+    }
+    .radio-group { display: flex; gap: 1rem; }
+    .radio-label { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      cursor: pointer; 
+      font-size: 0.875rem;
+    }
+    .radio-input { accent-color: #10b981; }
+    
+    /* Scenario Cards */
+    .scenario-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .scenario-card {
+      background: #18181b;
+      border: 2px solid #27272a;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .scenario-card:hover { border-color: #374151; }
+    .scenario-card.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    .scenario-card.filling { 
+      animation: fillBank 0.5s ease-out;
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.2);
+    }
+    .scenario-title { font-weight: 600; margin-bottom: 0.5rem; }
+    .scenario-desc { font-size: 0.875rem; color: #71717a; }
+    
+    /* Live Steps */
+    .step-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .step-item { 
+      padding: 0.75rem; 
+      border-radius: 0.5rem; 
+      background: #09090b; 
+      border: 1px solid #27272a;
+      font-size: 0.875rem;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+    .step-item.active { 
+      opacity: 1; 
+      border-color: #10b981; 
+      background: rgba(16, 185, 129, 0.1);
+      animation: slideIn 0.3s ease-out;
+    }
+    .step-item.completed { opacity: 0.7; border-color: #27272a; }
+    .step-icon { margin-right: 0.5rem; }
+    .step-success { color: #10b981; }
+    .step-running { color: #3b82f6; }
+    
+    /* Demo Controls */
+    .demo-controls { 
+      position: fixed; 
+      bottom: 1rem; 
+      right: 1rem; 
+      background: #18181b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.75rem; 
+      padding: 0.75rem; 
+      display: flex; 
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    
+    /* Animations */
+    @keyframes fillBank { 
+      from { transform: scale(1); background: rgba(16, 185, 129, 0.3); } 
+      to { transform: scale(1); background: rgba(16, 185, 129, 0.1); } 
+    }
+    @keyframes slideIn { 
+      from { opacity: 0; transform: translateY(10px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    /* Summary Grid */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+    .summary-item { 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      padding: 0.75rem;
+    }
+    .summary-label { font-size: 0.65rem; color: #71717a; text-transform: uppercase; margin-bottom: 0.25rem; }
+    .summary-value { font-size: 0.875rem; color: #fafafa; }
+    
+    /* Bank List */
+    .bank-list { 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      padding: 0.75rem;
+    }
+    .bank-tag { 
+      display: inline-block; 
+      background: #27272a; 
+      padding: 0.25rem 0.5rem; 
+      border-radius: 0.25rem; 
+      font-size: 0.75rem; 
+      margin-right: 0.5rem; 
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 0.5rem;
+      background: #27272a;
+      border-radius: 0.25rem;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      transition: width 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-title">KKB Admin</div>
+      <div class="nav-item active" onclick="showPage('banka')">Banka Regresyon Botu</div>
+      <div class="nav-item" onclick="showPage('kanal')">Kanal Kontrol Botu</div>
+      <div class="nav-item" onclick="showPage('dashboard')">Dashboard</div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="showPage('results')">Test Results</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Banka Regresyon Botu Page -->
+      <div id="page-banka" class="page active">
+        <div class="page-title">🏦 Banka Regresyon Botu</div>
+        <div class="page-subtitle">Bankalar arası işlem durumu monitörü ve test otomasyonu</div>
+        
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="card-title">Kontrol Paneli</div>
+            <button class="btn btn-primary" onclick="startWizard()">Yeni Test Başlat</button>
+          </div>
+          
+          <div class="metrics">
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value">8/10</div>
+                <div class="metric-label">Aktif Bankalar</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value">%94</div>
+                <div class="metric-label">Genel Başarı</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value" style="color: #f59e0b;">2</div>
+                <div class="metric-label">Uyarı</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value">156</div>
+                <div class="metric-label">Son 1 Saat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">Banka Durumu</div>
+          <div class="bank-grid">
+            <div class="bank-card">
+              <div class="bank-name"><span class="bank-status active"></span>AKBANK</div>
+              <div class="bank-meta">999046 • %96</div>
+            </div>
+            <div class="bank-card">
+              <div class="bank-name"><span class="bank-status warning"></span>DENİZBANK</div>
+              <div class="bank-meta">999134 • %88</div>
+            </div>
+            <div class="bank-card">
+              <div class="bank-name"><span class="bank-status active"></span>GARANTİ</div>
+              <div class="bank-meta">999062 • %98</div>
+            </div>
+            <div class="bank-card">
+              <div class="bank-name"><span class="bank-status active"></span>VAKIFBANK</div>
+              <div class="bank-meta">999015 • %72</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Results Page -->
+      <div id="page-results" class="page">
+        <div class="page-title">📊 Test Sonuçları</div>
+        <div class="page-subtitle">Canlı test akışı ve sonuçlar</div>
+        
+        <div class="card">
+          <div class="card-title">Test İlerlemesi</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+          </div>
+          <div id="progressText" style="font-size: 0.875rem; color: #71717a;">Hazırlanıyor...</div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">Canlı Adımlar</div>
+          <div class="step-list" id="liveSteps">
+            <div class="step-item">Test başlatılmadı</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Pages (placeholder) -->
+      <div id="page-kanal" class="page">
+        <div class="page-title">🔍 Kanal Kontrol Botu</div>
+        <div class="page-subtitle">Kanal sağlık kontrolü ve parametre doğrulama</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-dashboard" class="page">
+        <div class="page-title">📈 Dashboard</div>
+        <div class="page-subtitle">Genel sistem durumu</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Modal -->
+  <div class="modal-overlay" id="wizardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🚀 Banka Regresyon Testi Başlat</div>
+        <button class="modal-close" onclick="closeWizard()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="wizard-steps" id="wizardSteps"></div>
+        <div id="wizardContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="prevStep()">← Geri</button>
+        <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">İleri →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Controls -->
+  <div class="demo-controls">
+    <button class="btn btn-secondary" onclick="resetDemo()">🔄 Sıfırla</button>
+    <button class="btn btn-primary" onclick="autoPlayDemo()">▶ Oynat</button>
+  </div>
+
+  <script>
+    let currentStep = 0;
+    let wizardData = {
+      environment: 'STB',
+      selectedBanks: [],
+      scenario: '',
+      cardStrategy: 'automatic'
+    };
+    let isAutoPlaying = false;
+
+    const STEPS = [
+      { key: 'banks', title: 'Banka & Ortam' },
+      { key: 'scenario', title: 'Senaryo' },
+      { key: 'cards', title: 'Kart Seçimi' },
+      { key: 'summary', title: 'Özet & Çalıştır' }
+    ];
+
+    const BANKS = ['AKBANK', 'DENİZBANK', 'GARANTİ'];
+    
+    const SCENARIOS = [
+      { value: 'sale', label: 'Sadece Satış', desc: 'Tek ödeme işlemi' },
+      { value: 'all', label: 'Tam Regresyon', desc: 'Satış + İptal + İade' }
+    ];
+
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function startWizard() {
+      currentStep = 0;
+      wizardData = { environment: 'STB', selectedBanks: [], scenario: '', cardStrategy: 'automatic' };
+      document.getElementById('wizardModal').classList.add('show');
+      renderWizard();
+    }
+
+    function closeWizard() {
+      document.getElementById('wizardModal').classList.remove('show');
+    }
+
+    function renderWizard() {
+      const stepsEl = document.getElementById('wizardSteps');
+      const contentEl = document.getElementById('wizardContent');
+      const nextBtn = document.getElementById('nextBtn');
+
+      stepsEl.innerHTML = STEPS.map((step, i) => {
+        const statusClass = i === currentStep ? 'active' : i < currentStep ? 'completed' : '';
+        const stepNum = i < currentStep ? '✓' : i + 1;
+        return `<div class="wizard-step ${statusClass}"><div class="wizard-step-num">${stepNum}</div><div>${step.title}</div></div>`;
+      }).join('');
+
+      const step = STEPS[currentStep];
+      
+      if (step.key === 'banks') {
+        contentEl.innerHTML = `
+          <div class="form-group">
+            <div class="form-label">Test Ortamı</div>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="env" value="STB" ${wizardData.environment === 'STB' ? 'checked' : ''} 
+                  onchange="wizardData.environment = 'STB'" class="radio-input">
+                STB (Test)
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="env" value="PRP" ${wizardData.environment === 'PRP' ? 'checked' : ''}
+                  onchange="wizardData.environment = 'PRP'" class="radio-input">
+                PRP (Canlı)
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Banka Seçimi</div>
+            <div class="bank-grid" id="bankSelection">
+              ${BANKS.map(bank => {
+                const selected = wizardData.selectedBanks.includes(bank) ? 'selected' : '';
+                return `<div class="bank-card ${selected}" onclick="toggleBank('${bank}')"><div class="bank-name">${bank}</div><div class="bank-meta">Kanal: 999xxx</div></div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        nextBtn.textContent = 'İleri →';
+        nextBtn.disabled = wizardData.selectedBanks.length === 0;
+      } 
+      else if (step.key === 'scenario') {
+        contentEl.innerHTML = `
+          <div class="form-group">
+            <div class="form-label">Test Senaryosu</div>
+            <div class="scenario-grid">
+              ${SCENARIOS.map(sc => {
+                const selected = wizardData.scenario === sc.value ? 'selected' : '';
+                return `<div class="scenario-card ${selected}" onclick="selectScenario('${sc.value}')"><div class="scenario-title">${sc.label}</div><div class="scenario-desc">${sc.desc}</div></div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        nextBtn.textContent = 'İleri →';
+        nextBtn.disabled = !wizardData.scenario;
+      }
+      else if (step.key === 'cards') {
+        contentEl.innerHTML = `
+          <div class="form-group">
+            <div class="form-label">Kart Stratejisi</div>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="cards" value="automatic" 
+                  ${wizardData.cardStrategy === 'automatic' ? 'checked' : ''}
+                  onchange="wizardData.cardStrategy = 'automatic'" class="radio-input">
+                Otomatik (Tüm Issuer'lar)
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="cards" value="manual"
+                  ${wizardData.cardStrategy === 'manual' ? 'checked' : ''}
+                  onchange="wizardData.cardStrategy = 'manual'" class="radio-input">
+                Manuel
+              </label>
+            </div>
+          </div>
+        `;
+        nextBtn.textContent = 'İleri →';
+        nextBtn.disabled = false;
+      }
+      else if (step.key === 'summary') {
+        const scenarioLabel = SCENARIOS.find(s => s.value === wizardData.scenario)?.label || '';
+        contentEl.innerHTML = `
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Ortam</div>
+              <div class="summary-value">${wizardData.environment}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Seçili Bankalar</div>
+              <div class="summary-value">${wizardData.selectedBanks.length} adet</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Senaryo</div>
+              <div class="summary-value">${scenarioLabel}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Kart Stratejisi</div>
+              <div class="summary-value">${wizardData.cardStrategy === 'automatic' ? 'Otomatik' : 'Manuel'}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Tahmini Süre</div>
+              <div class="summary-value">${wizardData.selectedBanks.length * 2}-${wizardData.selectedBanks.length * 3} dk</div>
+            </div>
+          </div>
+          <div class="bank-list">
+            <div class="form-label">Seçili Bankalar</div>
+            ${wizardData.selectedBanks.map(b => `<span class="bank-tag">${b}</span>`).join('')}
+          </div>
+        `;
+        nextBtn.textContent = '🚀 Testi Başlat';
+        nextBtn.disabled = false;
+      }
+    }
+
+    function toggleBank(bank) {
+      const idx = wizardData.selectedBanks.indexOf(bank);
+      if (idx > -1) {
+        wizardData.selectedBanks.splice(idx, 1);
+      } else {
+        wizardData.selectedBanks.push(bank);
+      }
+      renderWizard();
+    }
+
+    function selectScenario(value) {
+      wizardData.scenario = value;
+      renderWizard();
+    }
+
+    function nextStep() {
+      if (currentStep < STEPS.length - 1) {
+        currentStep++;
+        renderWizard();
+      } else {
+        closeWizard();
+        startTest();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        renderWizard();
+      }
+    }
+
+    async function startTest() {
+      showPage('results');
+      document.querySelector('[onclick="showPage(\'results\')"]').classList.add('active');
+      
+      const stepsEl = document.getElementById('liveSteps');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      
+      stepsEl.innerHTML = '';
+      
+      const testSteps = [
+        '🚀 Test başlatılıyor...',
+        '🔐 Token alınıyor...',
+        ...wizardData.selectedBanks.flatMap(bank => [
+          `🏦 ${bank} - Token alma`,
+          `💳 ${bank} - Ödeme işlemi`,
+          `✅ ${bank} - İşlem başarılı`
+        ]),
+        '📊 Rapor oluşturuluyor...',
+        '✓ Test tamamlandı!'
+      ];
+      
+      for (let i = 0; i < testSteps.length; i++) {
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'step-item active';
+        stepDiv.innerHTML = `<span class="step-icon">⏳</span>${testSteps[i]}`;
+        stepsEl.appendChild(stepDiv);
+        
+        const progress = ((i + 1) / testSteps.length) * 100;
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `${Math.round(progress)}% tamamlandı - ${testSteps[i]}`;
+        
+        await sleep(isAutoPlaying ? 800 : 1200);
+        
+        stepDiv.classList.remove('active');
+        stepDiv.classList.add('completed');
+        stepDiv.innerHTML = `<span class="step-icon step-success">✓</span>${testSteps[i]}`;
+      }
+      
+      progressText.textContent = '✓ Test başarıyla tamamlandı!';
+    }
+
+    async function autoPlayDemo() {
+      if (isAutoPlaying) return;
+      isAutoPlaying = true;
+      
+      startWizard();
+      await sleep(1000);
+      
+      for (const bank of BANKS.slice(0, 2)) {
+        document.querySelector(`[onclick="toggleBank('${bank}')"]`).classList.add('filling');
+        toggleBank(bank);
+        await sleep(500);
+      }
+      await sleep(800);
+      nextStep();
+      await sleep(800);
+      
+      document.querySelector(`[onclick="selectScenario('all')"]`).classList.add('filling');
+      selectScenario('all');
+      await sleep(1000);
+      nextStep();
+      await sleep(800);
+      
+      await sleep(500);
+      nextStep();
+      await sleep(800);
+      
+      await sleep(1000);
+      nextStep();
+      
+      isAutoPlaying = false;
+    }
+
+    function resetDemo() {
+      location.reload();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('KKB Admin Demo Ready');
+    });
+  </script>
+</body>
+</html>

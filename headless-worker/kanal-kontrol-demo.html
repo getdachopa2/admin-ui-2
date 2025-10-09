@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KKB Admin - Kanal Kontrol Botu Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #09090b; 
+      color: #fafafa;
+    }
+    
+    /* Layout */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar { background: #18181b; border-right: 1px solid #27272a; padding: 1rem; }
+    .main { padding: 1.5rem; overflow-y: auto; }
+    
+    /* Sidebar */
+    .sidebar-title { font-weight: 600; margin-bottom: 1rem; }
+    .nav-item { 
+      padding: 0.5rem 0.75rem; 
+      border-radius: 0.75rem; 
+      font-size: 0.875rem; 
+      color: #71717a; 
+      cursor: pointer; 
+      margin-bottom: 0.25rem;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #fafafa; }
+    .nav-item.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .nav-divider { height: 1px; background: #27272a; margin: 0.5rem 0; }
+    
+    /* Page */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-subtitle { font-size: 0.875rem; color: #71717a; margin-bottom: 1.5rem; }
+    
+    /* Card */
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; }
+    .card-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.875rem; }
+    
+    /* Metrics */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .metric { text-align: center; padding: 1rem; }
+    .metric-value { font-size: 2rem; font-weight: 700; color: #10b981; }
+    .metric-label { font-size: 0.75rem; color: #71717a; margin-top: 0.25rem; }
+    .metric-value.warning { color: #f59e0b; }
+    .metric-value.error { color: #ef4444; }
+    
+    /* Buttons */
+    .btn { 
+      padding: 0.5rem 1rem; 
+      border-radius: 0.5rem; 
+      font-size: 0.875rem; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #10b981; color: white; }
+    .btn-primary:hover { background: #059669; }
+    .btn-secondary { background: #374151; color: white; }
+    .btn-secondary:hover { background: #4b5563; }
+    .btn-outline { background: transparent; border: 1px solid #27272a; color: #fafafa; }
+    .btn-outline:hover { background: #27272a; }
+    
+    /* Control Panel */
+    .control-panel { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 0.5rem; }
+    .control-label { font-size: 0.75rem; color: #71717a; }
+    .control-input { 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      padding: 0.5rem; 
+      color: #fafafa; 
+      font-size: 0.875rem;
+    }
+    
+    /* Tables */
+    .table-container { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      padding: 0.75rem; 
+      text-align: left; 
+      font-size: 0.75rem; 
+      color: #71717a; 
+      font-weight: 500;
+    }
+    .table td { 
+      border: 1px solid #27272a; 
+      padding: 0.75rem; 
+      font-size: 0.875rem;
+    }
+    .table tr:hover { background: rgba(255,255,255,0.02); }
+    
+    /* Status Badges */
+    .status-badge { 
+      display: inline-block; 
+      padding: 0.25rem 0.5rem; 
+      border-radius: 0.25rem; 
+      font-size: 0.75rem; 
+      font-weight: 500;
+    }
+    .status-badge.success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .status-badge.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .status-badge.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .status-badge.pending { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+    
+    /* Progress Bar */
+    .progress-bar {
+      width: 100%;
+      height: 0.5rem;
+      background: #27272a;
+      border-radius: 0.25rem;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      transition: width 0.5s ease;
+    }
+    
+    /* Modal */
+    .modal-overlay { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8); 
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal { 
+      background: #18181b; 
+      border: 1px solid #27272a; 
+      border-radius: 1rem; 
+      width: 90%; 
+      max-width: 600px; 
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header { 
+      padding: 1rem; 
+      border-bottom: 1px solid #27272a; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+    }
+    .modal-title { font-size: 1.125rem; font-weight: 600; }
+    .modal-close { 
+      background: none; 
+      border: none; 
+      color: #71717a; 
+      font-size: 1.5rem; 
+      cursor: pointer;
+    }
+    .modal-close:hover { color: #fafafa; }
+    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+    .modal-footer { 
+      padding: 1rem; 
+      border-top: 1px solid #27272a; 
+      display: flex; 
+      justify-content: space-between;
+    }
+    
+    /* Form */
+    .form-group { margin-bottom: 1rem; }
+    .form-label { 
+      display: block; 
+      font-size: 0.75rem; 
+      font-weight: 500; 
+      color: #71717a; 
+      margin-bottom: 0.5rem;
+    }
+    .form-input { 
+      width: 100%; 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      padding: 0.75rem; 
+      color: #fafafa; 
+      font-size: 0.875rem;
+    }
+    .radio-group { display: flex; gap: 1rem; }
+    .radio-label { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      cursor: pointer; 
+      font-size: 0.875rem;
+    }
+    .radio-input { accent-color: #10b981; }
+    
+    /* Live Steps */
+    .step-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .step-item { 
+      padding: 0.75rem; 
+      border-radius: 0.5rem; 
+      background: #09090b; 
+      border: 1px solid #27272a;
+      font-size: 0.875rem;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+    .step-item.active { 
+      opacity: 1; 
+      border-color: #10b981; 
+      background: rgba(16, 185, 129, 0.1);
+      animation: slideIn 0.3s ease-out;
+    }
+    .step-item.completed { opacity: 0.7; border-color: #27272a; }
+    .step-icon { margin-right: 0.5rem; }
+    .step-success { color: #10b981; }
+    .step-running { color: #3b82f6; }
+    
+    /* Demo Controls */
+    .demo-controls { 
+      position: fixed; 
+      bottom: 1rem; 
+      right: 1rem; 
+      background: #18181b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.75rem; 
+      padding: 0.75rem; 
+      display: flex; 
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    
+    /* Animations */
+    @keyframes slideIn { 
+      from { opacity: 0; transform: translateY(10px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    /* Response Time Chart */
+    .chart-container { 
+      height: 200px; 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      padding: 1rem; 
+      display: flex; 
+      align-items: end; 
+      gap: 2px;
+    }
+    .chart-bar { 
+      background: linear-gradient(180deg, #10b981, #059669); 
+      border-radius: 2px 2px 0 0; 
+      min-width: 3px; 
+      transition: all 0.3s;
+    }
+    .chart-bar:hover { 
+      background: linear-gradient(180deg, #34d399, #10b981); 
+    }
+    
+    /* Environment Selector */
+    .env-selector { 
+      display: flex; 
+      background: #09090b; 
+      border: 1px solid #27272a; 
+      border-radius: 0.5rem; 
+      overflow: hidden;
+    }
+    .env-option { 
+      padding: 0.5rem 1rem; 
+      background: transparent; 
+      border: none; 
+      color: #71717a; 
+      cursor: pointer; 
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .env-option.active { background: #10b981; color: white; }
+    .env-option:hover:not(.active) { background: #27272a; color: #fafafa; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-title">KKB Admin</div>
+      <div class="nav-item" onclick="showPage('dashboard')">Dashboard</div>
+      <div class="nav-item active" onclick="showPage('kanal')">Kanal Kontrol Botu</div>
+      <div class="nav-item" onclick="showPage('banka')">Banka Regresyon Botu</div>
+      <div class="nav-item" onclick="showPage('kart')">Kart Durum Raporu</div>
+      <div class="nav-item" onclick="showPage('parametre')">Parametre Durum Kontrol</div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="showPage('3d')">3D Session Builder</div>
+      <div class="nav-item" onclick="showPage('changelog')">📋 Changelog</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Kanal Kontrol Botu Page -->
+      <div id="page-kanal" class="page active">
+        <div class="page-title">🔍 Kanal Kontrol Botu</div>
+        <div class="page-subtitle">Kanal sağlık kontrolü ve parametre doğrulama sistemi</div>
+        
+        <!-- Control Panel -->
+        <div class="card">
+          <div class="card-title">Kontrol Paneli</div>
+          <div class="control-panel">
+            <div class="control-group">
+              <span class="control-label">Ortam:</span>
+              <div class="env-selector">
+                <button class="env-option active" onclick="setEnvironment('STB')">STB</button>
+                <button class="env-option" onclick="setEnvironment('PRP')">PRP</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <span class="control-label">Aralık:</span>
+              <input type="number" class="control-input" value="5" min="1" max="60" style="width: 60px;">
+              <span style="font-size: 0.875rem; color: #71717a;">saniye</span>
+            </div>
+            <button class="btn btn-primary" onclick="startChannelTest()">🚀 Test Başlat</button>
+            <button class="btn btn-outline" onclick="openWizard()">⚙️ Gelişmiş Ayarlar</button>
+          </div>
+        </div>
+        
+        <!-- Metrics -->
+        <div class="card">
+          <div class="card-title">Sistem Metrikleri</div>
+          <div class="metrics">
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value" id="totalRunsMetric">1,247</div>
+                <div class="metric-label">Toplam Test</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value" id="successfulRunsMetric">1,168</div>
+                <div class="metric-label">Başarılı</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value warning" id="failedRunsMetric">79</div>
+                <div class="metric-label">Başarısız</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="metric">
+                <div class="metric-value" id="avgResponseTimeMetric">1.2s</div>
+                <div class="metric-label">Ort. Yanıt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Channel Status Table -->
+        <div class="card">
+          <div class="card-title">Kanal Durumu</div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Kanal ID</th>
+                  <th>Banka</th>
+                  <th>Ortam</th>
+                  <th>Durum</th>
+                  <th>Son Test</th>
+                  <th>Yanıt Süresi</th>
+                  <th>Başarı Oranı</th>
+                  <th>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody id="channelTable">
+                <tr>
+                  <td>999046</td>
+                  <td>AKBANK</td>
+                  <td>STB</td>
+                  <td><span class="status-badge success">Aktif</span></td>
+                  <td>2 dakika önce</td>
+                  <td>0.8s</td>
+                  <td>96.2%</td>
+                  <td><button class="btn btn-outline" onclick="testSingleChannel('999046')">Test Et</button></td>
+                </tr>
+                <tr>
+                  <td>999134</td>
+                  <td>DENİZBANK</td>
+                  <td>STB</td>
+                  <td><span class="status-badge warning">Uyarı</span></td>
+                  <td>5 dakika önce</td>
+                  <td>2.1s</td>
+                  <td>88.4%</td>
+                  <td><button class="btn btn-outline" onclick="testSingleChannel('999134')">Test Et</button></td>
+                </tr>
+                <tr>
+                  <td>999062</td>
+                  <td>GARANTİ</td>
+                  <td>STB</td>
+                  <td><span class="status-badge success">Aktif</span></td>
+                  <td>1 dakika önce</td>
+                  <td>0.9s</td>
+                  <td>98.1%</td>
+                  <td><button class="btn btn-outline" onclick="testSingleChannel('999062')">Test Et</button></td>
+                </tr>
+                <tr>
+                  <td>999015</td>
+                  <td>VAKIFBANK</td>
+                  <td>STB</td>
+                  <td><span class="status-badge error">Hata</span></td>
+                  <td>15 dakika önce</td>
+                  <td>5.2s</td>
+                  <td>72.3%</td>
+                  <td><button class="btn btn-outline" onclick="testSingleChannel('999015')">Test Et</button></td>
+                </tr>
+                <tr>
+                  <td>999205</td>
+                  <td>KUVEYT</td>
+                  <td>STB</td>
+                  <td><span class="status-badge success">Aktif</span></td>
+                  <td>3 dakika önce</td>
+                  <td>1.1s</td>
+                  <td>94.7%</td>
+                  <td><button class="btn btn-outline" onclick="testSingleChannel('999205')">Test Et</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Response Time Chart -->
+        <div class="card">
+          <div class="card-title">Yanıt Süresi Grafiği (Son 24 Saat)</div>
+          <div class="chart-container" id="responseChart">
+            <!-- Chart bars will be generated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="card-title">Son Aktiviteler</div>
+          <div class="step-list" id="recentActivity">
+            <div class="step-item completed">
+              <span class="step-icon step-success">✓</span>
+              AKBANK (999046) - Token alma başarılı
+              <span style="float: right; font-size: 0.75rem; color: #71717a;">2 dakika önce</span>
+            </div>
+            <div class="step-item completed">
+              <span class="step-icon step-success">✓</span>
+              GARANTİ (999062) - Ödeme testi başarılı
+              <span style="float: right; font-size: 0.75rem; color: #71717a;">3 dakika önce</span>
+            </div>
+            <div class="step-item completed">
+              <span class="step-icon" style="color: #f59e0b;">⚠</span>
+              DENİZBANK (999134) - Yavaş yanıt (2.1s)
+              <span style="float: right; font-size: 0.75rem; color: #71717a;">5 dakika önce</span>
+            </div>
+            <div class="step-item completed">
+              <span class="step-icon" style="color: #ef4444;">✗</span>
+              VAKIFBANK (999015) - Bağlantı hatası
+              <span style="float: right; font-size: 0.75rem; color: #71717a;">15 dakika önce</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Progress Page -->
+      <div id="page-test-progress" class="page">
+        <div class="page-title">📊 Test İlerlemesi</div>
+        <div class="page-subtitle">Canlı kanal testi akışı</div>
+        
+        <div class="card">
+          <div class="card-title">Test İlerlemesi</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="testProgressFill" style="width: 0%"></div>
+          </div>
+          <div id="testProgressText" style="font-size: 0.875rem; color: #71717a;">Test başlatılmadı</div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">Canlı Test Adımları</div>
+          <div class="step-list" id="liveTestSteps">
+            <div class="step-item">Test başlatılmadı</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Pages (placeholder) -->
+      <div id="page-dashboard" class="page">
+        <div class="page-title">📈 Dashboard</div>
+        <div class="page-subtitle">Genel sistem durumu</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-banka" class="page">
+        <div class="page-title">🏦 Banka Regresyon Botu</div>
+        <div class="page-subtitle">Bankalar arası işlem testi</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-kart" class="page">
+        <div class="page-title">💳 Kart Durum Raporu</div>
+        <div class="page-subtitle">Test kartları durumu</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-parametre" class="page">
+        <div class="page-title">⚙️ Parametre Durum Kontrol</div>
+        <div class="page-subtitle">Sistem parametreleri kontrolü</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-3d" class="page">
+        <div class="page-title">🔐 3D Session Builder</div>
+        <div class="page-subtitle">3D Secure test oturumu oluşturucu</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+
+      <div id="page-changelog" class="page">
+        <div class="page-title">📋 Changelog</div>
+        <div class="page-subtitle">Sistem değişiklikleri</div>
+        <div class="card"><p style="color:#71717a;padding:2rem;text-align:center;">Demo için mock sayfa</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Modal -->
+  <div class="modal-overlay" id="wizardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Gelişmiş Kanal Test Ayarları</div>
+        <button class="modal-close" onclick="closeWizard()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Test Türü</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="testType" value="health" checked class="radio-input">
+              Sağlık Kontrolü
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="testType" value="payment" class="radio-input">
+              Ödeme Testi
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="testType" value="full" class="radio-input">
+              Tam Test
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Test Aralığı (saniye)</label>
+          <input type="number" class="form-input" value="5" min="1" max="300">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Timeout (saniye)</label>
+          <input type="number" class="form-input" value="30" min="5" max="120">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Test Edilecek Kanallar</label>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+            <label class="radio-label">
+              <input type="checkbox" checked class="radio-input">
+              AKBANK (999046)
+            </label>
+            <label class="radio-label">
+              <input type="checkbox" checked class="radio-input">
+              DENİZBANK (999134)
+            </label>
+            <label class="radio-label">
+              <input type="checkbox" checked class="radio-input">
+              GARANTİ (999062)
+            </label>
+            <label class="radio-label">
+              <input type="checkbox" class="radio-input">
+              VAKIFBANK (999015)
+            </label>
+            <label class="radio-label">
+              <input type="checkbox" checked class="radio-input">
+              KUVEYT (999205)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeWizard()">İptal</button>
+        <button class="btn btn-primary" onclick="startAdvancedTest()">🚀 Testi Başlat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Controls -->
+  <div class="demo-controls">
+    <button class="btn btn-secondary" onclick="resetDemo()">🔄 Sıfırla</button>
+    <button class="btn btn-primary" onclick="autoPlayDemo()">▶ Oynat</button>
+  </div>
+
+  <script>
+    let currentEnvironment = 'STB';
+    let isTestRunning = false;
+    let testInterval = null;
+    
+    const CHANNELS = [
+      { id: '999046', bank: 'AKBANK', status: 'success' },
+      { id: '999134', bank: 'DENİZBANK', status: 'warning' },
+      { id: '999062', bank: 'GARANTİ', status: 'success' },
+      { id: '999015', bank: 'VAKIFBANK', status: 'error' },
+      { id: '999205', bank: 'KUVEYT', status: 'success' }
+    ];
+
+    // Navigation
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Environment
+    function setEnvironment(env) {
+      currentEnvironment = env;
+      document.querySelectorAll('.env-option').forEach(opt => {
+        opt.classList.remove('active');
+        if (opt.textContent === env) {
+          opt.classList.add('active');
+        }
+      });
+    }
+
+    // Wizard
+    function openWizard() {
+      document.getElementById('wizardModal').classList.add('show');
+    }
+
+    function closeWizard() {
+      document.getElementById('wizardModal').classList.remove('show');
+    }
+
+    function startAdvancedTest() {
+      closeWizard();
+      startChannelTest();
+    }
+
+    // Channel Testing
+    async function startChannelTest() {
+      if (isTestRunning) return;
+      
+      showPage('test-progress');
+      document.querySelector('[onclick="showPage(\'test-progress\')"]')?.classList.add('active');
+      
+      isTestRunning = true;
+      const stepsEl = document.getElementById('liveTestSteps');
+      const progressFill = document.getElementById('testProgressFill');
+      const progressText = document.getElementById('testProgressText');
+      
+      stepsEl.innerHTML = '';
+      
+      const testSteps = [
+        '🚀 Test başlatılıyor...',
+        '🔧 Sistem parametreleri kontrol ediliyor...',
+        ...CHANNELS.flatMap(channel => [
+          `🏦 ${channel.bank} (${channel.id}) - Bağlantı testi`,
+          `🔐 ${channel.bank} (${channel.id}) - Token alma`,
+          `💳 ${channel.bank} (${channel.id}) - Test işlemi`,
+          `✅ ${channel.bank} (${channel.id}) - Sonuç değerlendirmesi`
+        ]),
+        '📊 Raporlar oluşturuluyor...',
+        '✓ Test tamamlandı!'
+      ];
+      
+      for (let i = 0; i < testSteps.length; i++) {
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'step-item active';
+        stepDiv.innerHTML = `<span class="step-icon">⏳</span>${testSteps[i]}`;
+        stepsEl.appendChild(stepDiv);
+        
+        const progress = ((i + 1) / testSteps.length) * 100;
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `${Math.round(progress)}% tamamlandı - ${testSteps[i]}`;
+        
+        await sleep(800);
+        
+        stepDiv.classList.remove('active');
+        stepDiv.classList.add('completed');
+        
+        // Simulate different results
+        const isSuccess = Math.random() > 0.2; // 80% success rate
+        const icon = isSuccess ? 
+          '<span class="step-icon step-success">✓</span>' : 
+          '<span class="step-icon" style="color: #ef4444;">✗</span>';
+        
+        stepDiv.innerHTML = icon + testSteps[i];
+      }
+      
+      progressText.textContent = '✓ Kanal testleri başarıyla tamamlandı!';
+      isTestRunning = false;
+      
+      // Update metrics
+      updateMetrics();
+    }
+
+    async function testSingleChannel(channelId) {
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = 'Test Ediliyor...';
+      button.disabled = true;
+      
+      await sleep(2000);
+      
+      // Simulate test result
+      const isSuccess = Math.random() > 0.3;
+      button.textContent = isSuccess ? '✅ Başarılı' : '❌ Başarısız';
+      
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.disabled = false;
+      }, 3000);
+    }
+
+    // Auto Play Demo
+    async function autoPlayDemo() {
+      // Start channel test automatically
+      await sleep(1000);
+      startChannelTest();
+    }
+
+    function resetDemo() {
+      location.reload();
+    }
+
+    function updateMetrics() {
+      // Simulate metric updates
+      const metrics = {
+        totalRuns: Math.floor(Math.random() * 100) + 1200,
+        successfulRuns: Math.floor(Math.random() * 50) + 1150,
+        failedRuns: Math.floor(Math.random() * 20) + 70,
+        avgResponseTime: (Math.random() * 2 + 0.5).toFixed(1)
+      };
+      
+      document.getElementById('totalRunsMetric').textContent = metrics.totalRuns.toLocaleString();
+      document.getElementById('successfulRunsMetric').textContent = metrics.successfulRuns.toLocaleString();
+      document.getElementById('failedRunsMetric').textContent = metrics.failedRuns;
+      document.getElementById('avgResponseTimeMetric').textContent = metrics.avgResponseTime + 's';
+    }
+
+    function generateChart() {
+      const chartContainer = document.getElementById('responseChart');
+      const hours = 24;
+      const bars = [];
+      
+      for (let i = 0; i < hours; i++) {
+        const height = Math.random() * 150 + 20;
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.style.height = height + 'px';
+        bar.style.flex = '1';
+        bar.title = `${i}:00 - ${height.toFixed(0)}ms`;
+        bars.push(bar);
+      }
+      
+      chartContainer.innerHTML = '';
+      bars.forEach(bar => chartContainer.appendChild(bar));
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      generateChart();
+      console.log('Kanal Kontrol Botu Demo Ready');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KKB Admin - Kanal Kontrol Botu Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    /* CSS Variables - Your design system */
+    :root {
+      --bg-base: #09090b;
+      --bg-card: #1f2937;
+      --bg-card-hover: #374151;
+      --border-base: #374151;
+      --text-100: #f9fafb;
+      --text-300: #9ca3af;
+      --text-400: #6b7280;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --green-400: #4ade80;
+      --green-500: #22c55e;
+      --red-400: #f87171;
+      --red-500: #ef4444;
+      --purple-400: #a78bfa;
+      --purple-500: #8b5cf6;
+      --amber-400: #fbbf24;
+      --indigo-400: #818cf8;
+      --cyan-400: #22d3ee;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-base); 
+      color: var(--text-100);
+    }
+    
+    /* Layout */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--bg-card); border-right: 1px solid var(--border-base); padding: 1rem; }
+    .main { padding: 1rem; overflow-y: auto; }
+    
+    /* Sidebar */
+    .sidebar-title { font-weight: 600; margin-bottom: 1rem; color: var(--text-100); }
+    .nav-item { 
+      padding: 0.5rem 0.75rem; 
+      border-radius: 0.75rem; 
+      font-size: 0.875rem; 
+      color: var(--text-300); 
+      cursor: pointer; 
+      margin-bottom: 0.25rem;
+      transition: all 0.2s;
+    }
+    .nav-item:hover { background: var(--bg-card-hover); color: var(--text-100); }
+    .nav-item.active { background: var(--bg-card-hover); color: var(--text-100); }
+    .nav-divider { height: 1px; background: var(--border-base); margin: 0.5rem 0; }
+    
+    /* Card */
+    .card { 
+      background: var(--bg-card); 
+      border: 1px solid var(--border-base); 
+      border-radius: 0.75rem; 
+      padding: 1rem; 
+      margin-bottom: 1rem; 
+    }
+    
+    /* Grid Layouts */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    .space-y-4 > * + * { margin-top: 1rem; }
+    
+    /* Buttons */
+    .btn { 
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem; 
+      border-radius: 0.5rem; 
+      font-size: 0.875rem; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 500;
+      transition: all 0.2s;
+      background: var(--blue-500);
+      color: white;
+    }
+    .btn:hover { background: var(--blue-400); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: var(--border-base); }
+    .btn-secondary:hover { background: var(--bg-card-hover); }
+    
+    /* Gradient Cards */
+    .gradient-blue { 
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(29, 78, 216, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    .gradient-green { 
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.1) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+    }
+    .gradient-red { 
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.1) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .gradient-purple { 
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(109, 40, 217, 0.1) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.5);
+    }
+    
+    /* Text Colors */
+    .text-blue-300 { color: #93c5fd; }
+    .text-blue-100 { color: #dbeafe; }
+    .text-green-300 { color: #86efac; }
+    .text-green-100 { color: #dcfce7; }
+    .text-red-300 { color: #fca5a5; }
+    .text-red-100 { color: #fee2e2; }
+    .text-purple-300 { color: #c4b5fd; }
+    .text-purple-100 { color: #ede9fe; }
+    .text-amber-300 { color: #fcd34d; }
+    .text-indigo-300 { color: #a5b4fc; }
+    .text-cyan-300 { color: #67e8f9; }
+    
+    /* Icons */
+    .icon { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; }
+    .icon-bg { padding: 0.5rem; border-radius: 0.5rem; }
+    .icon-bg-blue { background: rgba(59, 130, 246, 0.2); }
+    .icon-bg-green { background: rgba(34, 197, 94, 0.2); }
+    .icon-bg-red { background: rgba(239, 68, 68, 0.2); }
+    .icon-bg-purple { background: rgba(139, 92, 246, 0.2); }
+    .icon-bg-amber { background: rgba(245, 158, 11, 0.2); }
+    .icon-bg-indigo { background: rgba(99, 102, 241, 0.2); }
+    .icon-bg-cyan { background: rgba(6, 182, 212, 0.2); }
+    
+    /* Progress Bars */
+    .progress-bar {
+      width: 100%;
+      height: 0.75rem;
+      background: var(--border-base);
+      border-radius: 0.375rem;
+      overflow: hidden;
+    }
+    .progress-fill-green {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-500), var(--green-400));
+      transition: width 0.5s ease;
+    }
+    .progress-fill-red {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red-500), var(--red-400));
+      transition: width 0.5s ease;
+    }
+    
+    /* Modal */
+    .modal-overlay { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8); 
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal { 
+      background: var(--bg-card); 
+      border: 1px solid var(--border-base); 
+      border-radius: 1rem; 
+      width: 90%; 
+      max-width: 800px; 
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header { 
+      padding: 1rem; 
+      border-bottom: 1px solid var(--border-base); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+    }
+    .modal-title { font-size: 1.125rem; font-weight: 600; }
+    .modal-close { 
+      background: none; 
+      border: none; 
+      color: var(--text-300); 
+      font-size: 1.5rem; 
+      cursor: pointer;
+    }
+    .modal-close:hover { color: var(--text-100); }
+    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+    .modal-footer { 
+      padding: 1rem; 
+      border-top: 1px solid var(--border-base); 
+      display: flex; 
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    
+    /* Wizard Steps */
+    .wizard-steps { 
+      display: flex; 
+      gap: 0.5rem; 
+      margin-bottom: 1.5rem; 
+      flex-wrap: wrap; 
+      justify-content: center;
+    }
+    .wizard-step { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      padding: 0.5rem 0.75rem; 
+      border-radius: 0.75rem; 
+      background: var(--border-base); 
+      font-size: 0.75rem; 
+      font-weight: 500;
+      color: var(--text-300);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .wizard-step.active { 
+      background: var(--blue-500); 
+      color: white; 
+    }
+    .wizard-step.completed { 
+      background: var(--green-500); 
+      color: white; 
+    }
+    .wizard-step:hover:not(.active) { background: var(--bg-card-hover); }
+    .wizard-step-num { 
+      width: 1.25rem; 
+      height: 1.25rem; 
+      border-radius: 50%; 
+      background: rgba(255,255,255,0.2); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 0.625rem;
+      font-weight: 600;
+    }
+    
+    /* Form Elements */
+    .form-group { margin-bottom: 1rem; }
+    .form-label { 
+      display: block; 
+      font-size: 0.75rem; 
+      font-weight: 500; 
+      color: var(--text-300); 
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-input { 
+      width: 100%; 
+      background: var(--bg-base); 
+      border: 1px solid var(--border-base); 
+      border-radius: 0.5rem; 
+      padding: 0.75rem; 
+      color: var(--text-100); 
+      font-size: 0.875rem;
+    }
+    .form-input:focus { 
+      outline: none; 
+      border-color: var(--blue-500); 
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .checkbox-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .checkbox-item { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      padding: 0.5rem; 
+      border-radius: 0.5rem; 
+      cursor: pointer; 
+      transition: all 0.2s;
+    }
+    .checkbox-item:hover { background: var(--bg-base); }
+    .checkbox-item input { accent-color: var(--blue-500); }
+    
+    /* Demo Controls */
+    .demo-controls { 
+      position: fixed; 
+      bottom: 1rem; 
+      right: 1rem; 
+      background: var(--bg-card); 
+      border: 1px solid var(--border-base); 
+      border-radius: 0.75rem; 
+      padding: 0.75rem; 
+      display: flex; 
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { 
+        order: 2; 
+        border-right: none; 
+        border-top: 1px solid var(--border-base);
+        padding: 0.5rem;
+      }
+      .nav-item { padding: 0.375rem 0.5rem; font-size: 0.75rem; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(1, 1fr); }
+    }
+    
+    /* Animations */
+    @keyframes pulse { 
+      0%, 100% { opacity: 1; } 
+      50% { opacity: 0.5; } 
+    }
+    .animate-pulse { animation: pulse 2s infinite; }
+    
+    /* Utility Classes */
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-3 { gap: 0.75rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xs { font-size: 0.75rem; }
+    .text-lg { font-size: 1.125rem; }
+    .text-xl { font-size: 1.25rem; }
+    .font-bold { font-weight: 700; }
+    .font-semibold { font-weight: 600; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wide { letter-spacing: 0.025em; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-title">KKB Admin</div>
+      <div class="nav-item" onclick="showPage('dashboard')">Dashboard</div>
+      <div class="nav-item active" onclick="showPage('kanal')">Kanal Kontrol Botu</div>
+      <div class="nav-item" onclick="showPage('banka')">Banka Regresyon Botu</div>
+      <div class="nav-item" onclick="showPage('kart')">Kart Durum Raporu</div>
+      <div class="nav-item" onclick="showPage('parametre')">Parametre Durum Kontrol</div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" onclick="showPage('changelog')">📋 Changelog</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <!-- Kanal Kontrol Botu Page -->
+      <div id="page-kanal" class="page active">
+        <div class="space-y-4">
+          <!-- Dashboard Header -->
+          <div class="card">
+            <h1 class="mb-2 text-lg font-bold tracking-tight">Kanal Kontrol Botu Dashboard</h1>
+            <p class="text-sm text-gray-400">
+              <strong>Bot Performance Analytics</strong> - Gerçek zamanlı metrikler, istatistikler ve akış durumu izleme.
+            </p>
+          </div>
+
+          <!-- Metrics Cards Grid -->
+          <div class="grid-4">
+            <!-- Toplam Koşu -->
+            <div class="card gradient-blue">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs text-blue-300 uppercase tracking-wide">Toplam Koşu</p>
+                  <p class="text-xl font-bold text-blue-100" id="totalRuns">1247</p>
+                </div>
+                <div class="icon-bg icon-bg-blue">
+                  <svg class="icon text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Başarılı Koşu -->
+            <div class="card gradient-green">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs text-green-300 uppercase tracking-wide">Başarılı</p>
+                  <p class="text-xl font-bold text-green-100" id="successfulRuns">1168</p>
+                </div>
+                <div class="icon-bg icon-bg-green">
+                  <svg class="icon text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Başarısız Koşu -->
+            <div class="card gradient-red">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs text-red-300 uppercase tracking-wide">Başarısız</p>
+                  <p class="text-xl font-bold text-red-100" id="failedRuns">79</p>
+                </div>
+                <div class="icon-bg icon-bg-red">
+                  <svg class="icon text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Toplam İstek -->
+            <div class="card gradient-purple">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs text-purple-300 uppercase tracking-wide">Toplam İstek</p>
+                  <p class="text-xl font-bold text-purple-100" id="totalRequests">5428</p>
+                </div>
+                <div class="icon-bg icon-bg-purple">
+                  <svg class="icon text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Metrics -->
+          <div class="grid-3">
+            <!-- Ortalama Yanıt Süresi -->
+            <div class="card">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Ortalama Yanıt Süresi</span>
+                <div class="icon-bg icon-bg-amber">
+                  <svg class="icon text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <p class="text-lg font-bold" id="avgResponseTime">1.2s</p>
+            </div>
+
+            <!-- Bugünkü Koşular -->
+            <div class="card">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Bugünkü Koşular</span>
+                <div class="icon-bg icon-bg-indigo">
+                  <svg class="icon text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <p class="text-lg font-bold" id="todayRuns">156</p>
+            </div>
+
+            <!-- Aktif Akışlar -->
+            <div class="card">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Aktif Akışlar</span>
+                <div class="icon-bg icon-bg-cyan">
+                  <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                </div>
+              </div>
+              <p class="text-lg font-bold" id="activeFlows">3</p>
+            </div>
+          </div>
+
+          <!-- Success Rate Chart -->
+          <div class="card">
+            <h3 class="text-base font-semibold mb-3">Başarı Oranı</h3>
+            <div class="space-y-3">
+              <!-- Success Rate Bar -->
+              <div>
+                <div class="flex justify-between text-sm mb-2">
+                  <span>Başarılı İşlemler</span>
+                  <span id="successRate">93.7%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill-green" id="successBar" style="width: 93.7%"></div>
+                </div>
+              </div>
+
+              <!-- Failure Rate Bar -->
+              <div>
+                <div class="flex justify-between text-sm mb-2">
+                  <span>Başarısız İşlemler</span>
+                  <span id="failureRate">6.3%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill-red" id="failureBar" style="width: 6.3%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <h3 class="text-base font-semibold mb-3">Hızlı İşlemler</h3>
+            <div class="flex items-center gap-3">
+              <button class="btn" onclick="openWizard()" id="startTestBtn">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Yeni Test Başlat
+              </button>
+              
+              <div id="rateLimitInfo" style="display: none;">
+                <span class="text-sm text-gray-400">Rate limit aktif - </span>
+                <span class="text-sm text-amber-400" id="remainingTime">0s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Pages (placeholder) -->
+      <div id="page-dashboard" class="page" style="display: none;">
+        <div class="card"><h1>📈 Dashboard</h1><p>Ana dashboard sayfası</p></div>
+      </div>
+      <div id="page-banka" class="page" style="display: none;">
+        <div class="card"><h1>🏦 Banka Regresyon Botu</h1><p>Banka regresyon test sistemi</p></div>
+      </div>
+      <div id="page-kart" class="page" style="display: none;">
+        <div class="card"><h1>💳 Kart Durum Raporu</h1><p>Test kartları raporu</p></div>
+      </div>
+      <div id="page-parametre" class="page" style="display: none;">
+        <div class="card"><h1>⚙️ Parametre Durum Kontrol</h1><p>Sistem parametreleri</p></div>
+      </div>
+      <div id="page-changelog" class="page" style="display: none;">
+        <div class="card"><h1>📋 Changelog</h1><p>Sistem değişiklikleri</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Wizard Modal -->
+  <div class="modal-overlay" id="wizardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Test Sihirbazı</div>
+        <button class="modal-close" onclick="closeWizard()">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Wizard Steps -->
+        <div class="wizard-steps" id="wizardSteps">
+          <div class="wizard-step active" onclick="goToStep(0)">
+            <div class="wizard-step-num">1</div>
+            <div>Senaryo</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(1)">
+            <div class="wizard-step-num">2</div>
+            <div>Ortam & Kanal</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(2)">
+            <div class="wizard-step-num">3</div>
+            <div>Uygulama</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(3)">
+            <div class="wizard-step-num">4</div>
+            <div>Kartlar</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(4)">
+            <div class="wizard-step-num">5</div>
+            <div>İptal/İade</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(5)">
+            <div class="wizard-step-num">6</div>
+            <div>Ödeme</div>
+          </div>
+          <div class="wizard-step" onclick="goToStep(6)">
+            <div class="wizard-step-num">7</div>
+            <div>Özet</div>
+          </div>
+        </div>
+
+        <!-- Step Content -->
+        <div id="wizardContent">
+          <!-- Step 1: Senaryo -->
+          <div id="step-0" class="wizard-content-step">
+            <div class="form-group">
+              <label class="form-label">Test Senaryoları</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="scenario-payment" value="PAYMENT">
+                  <label for="scenario-payment">Ödeme İşlemi</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="scenario-cancel" value="CANCEL">
+                  <label for="scenario-cancel">İptal İşlemi</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="scenario-refund" value="REFUND">
+                  <label for="scenario-refund">İade İşlemi</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="scenario-all" value="ALL">
+                  <label for="scenario-all">Tüm İşlemler</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Ortam & Kanal -->
+          <div id="step-1" class="wizard-content-step" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Test Ortamı</label>
+              <select class="form-input" id="environment">
+                <option value="STB">STB (Test)</option>
+                <option value="PRP">PRP (Canlı)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kanal ID</label>
+              <input type="text" class="form-input" id="channelId" value="TURKCELL_PORTAL" placeholder="Kanal ID">
+            </div>
+          </div>
+
+          <!-- Step 3: Uygulama Bilgileri -->
+          <div id="step-2" class="wizard-content-step" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Uygulama Adı</label>
+              <input type="text" class="form-input" id="appName" value="TURKCELL_PORTAL">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Uygulama Şifresi</label>
+              <input type="text" class="form-input" id="appPassword" value="password123">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Güvenlik Kodu</label>
+              <input type="text" class="form-input" id="secureCode" value="secure123">
+            </div>
+          </div>
+
+          <!-- Step 4: Kart Seçimi -->
+          <div id="step-3" class="wizard-content-step" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Kart Seçim Modu</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="radio" name="cardMode" id="cardAuto" value="automatic" checked>
+                  <label for="cardAuto">Otomatik (Sistem seçer)</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="radio" name="cardMode" id="cardManual" value="manual">
+                  <label for="cardManual">Manuel (Kart seçimi)</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kart Sayısı</label>
+              <input type="number" class="form-input" id="cardCount" value="10" min="1" max="50">
+            </div>
+          </div>
+
+          <!-- Step 5: İptal/İade -->
+          <div id="step-4" class="wizard-content-step" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">İptal/İade Ayarları</label>
+              <p class="text-sm text-gray-400 mb-3">Bu adım sadece iptal/iade senaryoları seçildiğinde kullanılır.</p>
+              <div class="form-group">
+                <label class="form-label">Referans Payment ID (opsiyonel)</label>
+                <input type="text" class="form-input" id="refPaymentId" placeholder="Mevcut payment ID">
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Ödeme Bilgileri -->
+          <div id="step-5" class="wizard-content-step" style="display: none;">
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Kullanıcı ID</label>
+                <input type="text" class="form-input" id="userId" value="test_user">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kullanıcı Adı</label>
+                <input type="text" class="form-input" id="userName" value="Test User">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Tutar</label>
+                <input type="number" class="form-input" id="amount" value="10" step="0.01">
+              </div>
+              <div class="form-group">
+                <label class="form-label">MSISDN</label>
+                <input type="text" class="form-input" id="msisdn" value="5303589836">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ödeme Türü</label>
+              <select class="form-input" id="paymentType">
+                <option value="CREDITCARD">Kredi Kartı</option>
+                <option value="DEBITCARD">Banka Kartı</option>
+                <option value="PREPAIDCARD">Ön Ödemeli Kart</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 7: Özet -->
+          <div id="step-6" class="wizard-content-step" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Test Özeti</label>
+              <div class="card" style="background: var(--bg-base);">
+                <div id="testSummary">
+                  <p><strong>Senaryo:</strong> <span id="summaryScenarios">-</span></p>
+                  <p><strong>Ortam:</strong> <span id="summaryEnv">-</span></p>
+                  <p><strong>Kanal:</strong> <span id="summaryChannel">-</span></p>
+                  <p><strong>Kart Modu:</strong> <span id="summaryCardMode">-</span></p>
+                  <p><strong>Tutar:</strong> <span id="summaryAmount">-</span> TL</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="prevStep()" id="prevBtn">← Geri</button>
+        <button class="btn" onclick="nextStep()" id="nextBtn">İleri →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Controls -->
+  <div class="demo-controls">
+    <button class="btn btn-secondary" onclick="resetDemo()">🔄 Sıfırla</button>
+    <button class="btn" onclick="autoPlayDemo()">▶ Oynat</button>
+  </div>
+
+  <script>
+    // Global State
+    let currentStep = 0;
+    let wizardData = {
+      scenarios: [],
+      env: 'STB',
+      channelId: 'TURKCELL_PORTAL',
+      application: {
+        applicationName: 'TURKCELL_PORTAL',
+        applicationPassword: 'password123',
+        secureCode: 'secure123'
+      },
+      cardSelectionMode: 'automatic',
+      cardCount: 10,
+      payment: {
+        userId: 'test_user',
+        userName: 'Test User',
+        amount: 10,
+        msisdn: '5303589836',
+        paymentType: 'CREDITCARD'
+      }
+    };
+    let isTestRunning = false;
+    let rateLimitActive = false;
+
+    const TOTAL_STEPS = 7;
+
+    // Navigation
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).style.display = 'block';
+      event.target.classList.add('active');
+    }
+
+    // Wizard Functions
+    function openWizard() {
+      if (rateLimitActive) {
+        alert('Rate limit aktif. Lütfen bekleyin.');
+        return;
+      }
+      document.getElementById('wizardModal').classList.add('show');
+      updateWizardDisplay();
+    }
+
+    function closeWizard() {
+      document.getElementById('wizardModal').classList.remove('show');
+      currentStep = 0;
+      updateWizardDisplay();
+    }
+
+    function nextStep() {
+      if (currentStep < TOTAL_STEPS - 1) {
+        collectStepData();
+        currentStep++;
+        updateWizardDisplay();
+      } else {
+        // Final step - start test
+        collectStepData();
+        updateSummary();
+        startTest();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        updateWizardDisplay();
+      }
+    }
+
+    function goToStep(stepIndex) {
+      if (stepIndex >= 0 && stepIndex < TOTAL_STEPS) {
+        collectStepData();
+        currentStep = stepIndex;
+        updateWizardDisplay();
+      }
+    }
+
+    function updateWizardDisplay() {
+      // Update step indicators
+      const steps = document.querySelectorAll('.wizard-step');
+      steps.forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        if (index === currentStep) {
+          step.classList.add('active');
+        } else if (index < currentStep) {
+          step.classList.add('completed');
+          step.querySelector('.wizard-step-num').textContent = '✓';
+        } else {
+          step.querySelector('.wizard-step-num').textContent = index + 1;
+        }
+      });
+
+      // Show current step content
+      document.querySelectorAll('.wizard-content-step').forEach((content, index) => {
+        content.style.display = index === currentStep ? 'block' : 'none';
+      });
+
+      // Update buttons
+      document.getElementById('prevBtn').style.display = currentStep === 0 ? 'none' : 'block';
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.textContent = currentStep === TOTAL_STEPS - 1 ? '🚀 Testi Başlat' : 'İleri →';
+
+      // Update summary if on last step
+      if (currentStep === TOTAL_STEPS - 1) {
+        updateSummary();
+      }
+    }
+
+    function collectStepData() {
+      // Collect data from current step
+      switch (currentStep) {
+        case 0: // Scenarios
+          wizardData.scenarios = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(cb => cb.value);
+          break;
+        case 1: // Environment & Channel
+          wizardData.env = document.getElementById('environment').value;
+          wizardData.channelId = document.getElementById('channelId').value;
+          break;
+        case 2: // Application
+          wizardData.application = {
+            applicationName: document.getElementById('appName').value,
+            applicationPassword: document.getElementById('appPassword').value,
+            secureCode: document.getElementById('secureCode').value
+          };
+          break;
+        case 3: // Cards
+          wizardData.cardSelectionMode = document.querySelector('input[name="cardMode"]:checked').value;
+          wizardData.cardCount = parseInt(document.getElementById('cardCount').value);
+          break;
+        case 4: // Cancel/Refund
+          wizardData.refPaymentId = document.getElementById('refPaymentId').value;
+          break;
+        case 5: // Payment
+          wizardData.payment = {
+            userId: document.getElementById('userId').value,
+            userName: document.getElementById('userName').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            msisdn: document.getElementById('msisdn').value,
+            paymentType: document.getElementById('paymentType').value
+          };
+          break;
+      }
+    }
+
+    function updateSummary() {
+      document.getElementById('summaryScenarios').textContent = wizardData.scenarios.join(', ') || 'Seçilmedi';
+      document.getElementById('summaryEnv').textContent = wizardData.env;
+      document.getElementById('summaryChannel').textContent = wizardData.channelId;
+      document.getElementById('summaryCardMode').textContent = wizardData.cardSelectionMode === 'automatic' ? 'Otomatik' : 'Manuel';
+      document.getElementById('summaryAmount').textContent = wizardData.payment.amount;
+    }
+
+    // Test Execution
+    async function startTest() {
+      if (isTestRunning) return;
+      
+      console.log('Starting test with data:', wizardData);
+      closeWizard();
+      
+      // Start rate limit
+      startRateLimit(5000); // 5 seconds
+      
+      // Simulate test execution
+      isTestRunning = true;
+      
+      // Update metrics simulation
+      setTimeout(() => {
+        updateMetrics();
+        isTestRunning = false;
+        alert('Test başarıyla tamamlandı! Sonuçlar için Test Results sayfasına yönlendiriliyorsunuz.');
+      }, 3000);
+    }
+
+    function startRateLimit(duration) {
+      rateLimitActive = true;
+      document.getElementById('startTestBtn').disabled = true;
+      document.getElementById('rateLimitInfo').style.display = 'block';
+      
+      let remaining = Math.ceil(duration / 1000);
+      document.getElementById('remainingTime').textContent = remaining + 's';
+      
+      const interval = setInterval(() => {
+        remaining--;
+        document.getElementById('remainingTime').textContent = remaining + 's';
+        
+        if (remaining <= 0) {
+          clearInterval(interval);
+          rateLimitActive = false;
+          document.getElementById('startTestBtn').disabled = false;
+          document.getElementById('rateLimitInfo').style.display = 'none';
+        }
+      }, 1000);
+    }
+
+    function updateMetrics() {
+      // Simulate metric updates
+      const metrics = {
+        totalRuns: parseInt(document.getElementById('totalRuns').textContent) + 1,
+        successfulRuns: parseInt(document.getElementById('successfulRuns').textContent) + (Math.random() > 0.1 ? 1 : 0),
+        failedRuns: parseInt(document.getElementById('failedRuns').textContent) + (Math.random() > 0.9 ? 1 : 0),
+        totalRequests: parseInt(document.getElementById('totalRequests').textContent) + Math.floor(Math.random() * 10) + 1,
+        todayRuns: parseInt(document.getElementById('todayRuns').textContent) + 1
+      };
+      
+      document.getElementById('totalRuns').textContent = metrics.totalRuns;
+      document.getElementById('successfulRuns').textContent = metrics.successfulRuns;
+      document.getElementById('failedRuns').textContent = metrics.failedRuns;
+      document.getElementById('totalRequests').textContent = metrics.totalRequests;
+      document.getElementById('todayRuns').textContent = metrics.todayRuns;
+      
+      // Update success rates
+      const successRate = ((metrics.successfulRuns / metrics.totalRuns) * 100).toFixed(1);
+      const failureRate = ((metrics.failedRuns / metrics.totalRuns) * 100).toFixed(1);
+      
+      document.getElementById('successRate').textContent = successRate + '%';
+      document.getElementById('failureRate').textContent = failureRate + '%';
+      document.getElementById('successBar').style.width = successRate + '%';
+      document.getElementById('failureBar').style.width = failureRate + '%';
+    }
+
+    // Auto Play Demo
+    async function autoPlayDemo() {
+      openWizard();
+      await sleep(1000);
+      
+      // Step 1: Select scenarios
+      document.getElementById('scenario-payment').checked = true;
+      document.getElementById('scenario-all').checked = true;
+      await sleep(800);
+      nextStep();
+      
+      // Step 2: Environment (keep defaults)
+      await sleep(500);
+      nextStep();
+      
+      // Step 3: Application (keep defaults)
+      await sleep(500);
+      nextStep();
+      
+      // Step 4: Cards (keep defaults)
+      await sleep(500);
+      nextStep();
+      
+      // Step 5: Cancel/Refund (skip)
+      await sleep(500);
+      nextStep();
+      
+      // Step 6: Payment (keep defaults)
+      await sleep(500);
+      nextStep();
+      
+      // Step 7: Summary and start
+      await sleep(1000);
+      nextStep(); // This will start the test
+    }
+
+    function resetDemo() {
+      location.reload();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      updateWizardDisplay();
+      console.log('Kanal Kontrol Botu Demo Ready');
+    });
+  </script>
+</body>
+</html>

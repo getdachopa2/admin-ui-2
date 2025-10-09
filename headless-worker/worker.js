@@ -948,12 +948,19 @@ async function performAutomation({ threeDSessionId, cardData, otp, challengeSele
       success, 
       finalUrl, 
       error: success ? null : (errorDetails || 'Success not confirmed'),
-      errorDetails: errorDetails || null
+      errorDetails: errorDetails || null,
+      resultCode: success ? 0 : 1,
+      timestamp: new Date().toISOString()
     };
 
   } catch (error) {
     console.error('Error in automation:', error);
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: error.message,
+      resultCode: 500,
+      timestamp: new Date().toISOString()
+    };
   } finally {
     if (browser) {
       await browser.close();
